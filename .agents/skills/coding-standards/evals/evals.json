@@ -1,0 +1,87 @@
+{
+  "skill_name": "coding-standards",
+  "version": "2.0",
+  "description": "Universal coding standards, best practices, and patterns for TypeScript, JavaScript, React, and Node.js development.",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "Detect mutable state mutation",
+      "prompt": "Review this code for coding standards violations: user.name = 'Alice'; users.push(newUser);",
+      "expected_output": "Identifies direct mutation of objects and arrays. Suggests using spread operator: const updatedUser = { ...user, name: 'Alice' } and const updatedUsers = [...users, newUser].",
+      "assertions": ["Mentions immutability pattern", "Suggests spread operator", "Flags push() as mutation"],
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "Replace any types with proper interfaces",
+      "prompt": "Replace all 'any' types in this file with proper interfaces following the coding-standards skill: function getData(id: any): Promise<any> { return fetch(id); }",
+      "expected_output": "Creates typed interfaces and replaces 'any' with concrete types. e.g., interface DataItem { id: string; name: string; } and function getData(id: string): Promise<DataItem>.",
+      "assertions": ["Eliminates all 'any' types", "Defines proper interfaces", "Uses specific return types"],
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "Refactor long function into smaller functions",
+      "prompt": "Refactor this 90-line function in src/lib/markets.ts — split it into smaller functions following the coding-standards skill.",
+      "expected_output": "Breaks the function into 3-5 smaller named functions under 50 lines each, each with a single responsibility. Uses early returns. Original function calls the extracted helpers.",
+      "assertions": ["Each function is under 50 lines", "Uses descriptive function names", "Implements early returns for validation"],
+      "files": ["src/lib/markets.ts"]
+    },
+    {
+      "id": 4,
+      "eval_name": "Add comprehensive error handling",
+      "prompt": "Add comprehensive error handling to the fetchData function in src/api/markets.ts following our coding standards.",
+      "expected_output": "Wraps fetch in try/catch, checks response.ok, throws descriptive errors with HTTP status codes, logs errors with context.",
+      "assertions": ["Uses try/catch block", "Checks response.ok", "Provides meaningful error messages"],
+      "files": ["src/api/markets.ts"]
+    },
+    {
+      "id": 5,
+      "eval_name": "Detect magic numbers",
+      "prompt": "Review this code and identify code smells: if (retryCount > 3) { } setTimeout(callback, 500);",
+      "expected_output": "Identifies magic numbers 3 and 500. Suggests named constants: const MAX_RETRIES = 3; const DEBOUNCE_DELAY_MS = 500;.",
+      "assertions": ["Identifies magic numbers", "Suggests named constants", "Uses UPPER_SNAKE_CASE naming"],
+      "files": []
+    },
+    {
+      "id": 6,
+      "eval_name": "Create Zod validation schema",
+      "prompt": "Create a Zod validation schema for the CreateOrder request body following our API design standards: fields are email (string), items (array of {productId: string, quantity: number}), and shippingAddress (string).",
+      "expected_output": "Defines a Zod schema with z.object containing email as z.string().email(), items as z.array with nested object shape, and shippingAddress as z.string().min(1). Includes error handling for ZodError in the POST handler.",
+      "assertions": ["Uses z.object for top-level schema", "Validates email format", "Defines nested array schema for items", "Includes ZodError catch block"],
+      "files": []
+    },
+    {
+      "id": 7,
+      "eval_name": "Enforce parallel async operations",
+      "prompt": "Review this code and suggest improvements: const users = await fetchUsers(); const markets = await fetchMarkets(); const stats = await fetchStats();",
+      "expected_output": "Identifies sequential awaits that can run in parallel. Suggests Promise.all for independent async calls to reduce total wait time.",
+      "assertions": ["Identifies sequential awaits", "Suggests Promise.all", "Explains performance benefit"],
+      "files": []
+    },
+    {
+      "id": 8,
+      "eval_name": "Fix deep nesting with early returns",
+      "prompt": "Refactor this nested if block to use early returns following coding standards: if (user) { if (user.isAdmin) { if (market) { if (market.isActive) { doSomething(); } } } }",
+      "expected_output": "Converts to guard clauses with early returns: if (!user) return; if (!user.isAdmin) return; if (!market) return; if (!market.isActive) return; doSomething();",
+      "assertions": ["Uses early return pattern", "Reduces nesting depth", "Improves readability"],
+      "files": []
+    },
+    {
+      "id": 9,
+      "eval_name": "React component with proper types",
+      "prompt": "Create a reusable Button component following React coding standards with props for children, onClick, disabled, and variant (primary/secondary).",
+      "expected_output": "Creates a functional component with TypeScript interface for props, default values, proper typing, and clean JSX structure.",
+      "assertions": ["Defines TypeScript interface for props", "Uses destructured parameters", "Sets default prop values", "Returns typed JSX element"],
+      "files": []
+    },
+    {
+      "id": 10,
+      "eval_name": "Enforce file naming conventions",
+      "prompt": "Check if these file names follow our project conventions: components/button.tsx, hooks/Auth.ts, lib/format_date.ts, types/api.ts",
+      "expected_output": "Identifies violations: button.tsx should be Button.tsx (PascalCase for components), Auth.ts should be useAuth.ts (camelCase with 'use' prefix for hooks), format_date.ts should be formatDate.ts (camelCase for utilities), api.ts should be api.types.ts (.types suffix).",
+      "assertions": ["Checks PascalCase for components", "Checks 'use' prefix for hooks", "Checks camelCase for utilities", "Checks .types suffix for type files"],
+      "files": []
+    }
+  ]
+}

@@ -1,70 +1,77 @@
-# GitHub Codespaces ♥️ React
+# Recovery Buddy
 
-Welcome to your shiny new Codespace running React! We've got everything fired up and running for you to explore React.
+A single-page application for tracking attendance in clinical and non-clinical group therapy sessions. Built with React 18, Vite, and Framer Motion.
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+## Features
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+- **Group Management** — Track progress across clinical, mandatory, after-30-days, and support groups
+- **Check-In / Check-Out** — Record daily session attendance with optional notes and undo support
+- **Progress Tracking** — Visual progress bars and rings per category and overall
+- **Weekend Pass Eligibility** — 30-day countdown tracker with pass claiming and history
+- **Certificate Tracking** — Automatic completion detection across certificate categories
+- **NYC Time Sync** — Clock synchronized to America/New_York timezone via API-Ninjas, with local fallback
+- **Data Export/Import** — JSON-based backup and restore of all program data
+- **Dark Mode** — Automatic theme via `prefers-color-scheme`
+- **Mobile Layout** — Bottom-tab navigation on viewports ≤768px
 
-This project was bootstrapped for you with [Vite](https://vitejs.dev/).
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| React 18 | UI framework |
+| Vite 8 | Build tool and dev server |
+| Vitest 4 | Testing framework |
+| Testing Library | Component testing utilities |
+| motion (Framer Motion) | Animations and transitions |
+| api-ninjas.com | NYC timezone API |
 
 ## Available Scripts
 
-In the project directory, you can run:
+```
+npm start      — Start development server
+npm run build  — Production build to dist/
+npm test       — Run test suite
+npm run preview — Preview production build
+```
 
-### `npm start`
+## Project Structure
 
-We've already run this for you in the `Codespaces: server` terminal window below. If you need to stop the server for any reason you can just run `npm start` again to bring it back online.
+```
+src/
+├── components/       # React components (Dashboard, GroupCard, etc.)
+│   ├── Dashboard.jsx       # Main orchestrator / state management
+│   ├── GroupCard.jsx       # Individual group progress card
+│   ├── DailyCheckIn.jsx    # Check-in modal with focus trapping
+│   ├── CategoryTabs.jsx    # Category filter tabs
+│   ├── PassCountdown.jsx   # Weekend pass eligibility tracker
+│   ├── CertificateTracker.jsx  # Certificate completion status
+│   ├── ProgressOverview.jsx    # Per-category progress bars
+│   ├── ProgressBar.jsx     # Reusable animated progress bar
+│   ├── MobileLayout.jsx    # Mobile bottom-tab layout
+│   ├── StartDateButton.jsx # Program start date picker + reset
+│   ├── ToastContainer.jsx  # Toast notification stack
+│   ├── ErrorBoundary.jsx   # React error boundary
+│   └── Icons.jsx           # SVG icon components
+├── data/             # Static data definitions
+│   ├── programData.js      # Group definitions and helpers
+│   └── categories.js       # Category definitions
+├── services/         # Business logic / persistence
+│   ├── storage.js          # localStorage CRUD with validation
+│   ├── nycTime.js          # NYC time sync and drift calculation
+│   └── api.js              # API fetch for world time
+├── hooks/            # Custom React hooks
+│   └── useMediaQuery.js    # Reactive media query hook
+├── index.jsx         # App entry point
+└── App.jsx           # Root component
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000/](http://localhost:3000/) in the built-in Simple Browser (`Cmd/Ctrl + Shift + P > Simple Browser: Show`) to view your running application.
+## Data Storage
 
-The page will reload automatically when you make changes.\
-You may also see any lint errors in the console.
+All data is persisted in the browser's `localStorage` under three keys:
+- `clinical-program-tracker` — group progress (completed counts)
+- `clinical-program-checkins` — individual check-in records
+- `clinical-program-settings` — program start date, pass history, preferences
 
-### `npm test`
+## License
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-## Learn More
-
-You can learn more in the [Vite documentation](https://vitejs.dev/guide/).
-
-To learn Vitest, a Vite-native testing framework, go to [Vitest documentation](https://vitest.dev/guide/)
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://sambitsahoo.com/blog/vite-code-splitting-that-works.html](https://sambitsahoo.com/blog/vite-code-splitting-that-works.html)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)
-
-### Advanced Configuration
-
-This section has moved here: [https://vitejs.dev/guide/build.html#advanced-base-options](https://vitejs.dev/guide/build.html#advanced-base-options)
-
-### Deployment
-
-This section has moved here: [https://vitejs.dev/guide/build.html](https://vitejs.dev/guide/build.html)
-
-### Troubleshooting
-
-This section has moved here: [https://vitejs.dev/guide/troubleshooting.html](https://vitejs.dev/guide/troubleshooting.html)
+MIT

@@ -2,8 +2,9 @@ import { expect, test } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+// Basic smoke test — verifies the app renders the main heading without crashing
+test('renders program tracker title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeDefined();
+  const heading = screen.getByRole('heading', { level: 1, name: /Recovery Buddy/i });
+  expect(heading).toBeDefined();
 });
