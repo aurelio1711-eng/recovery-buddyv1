@@ -4,7 +4,6 @@ import CategoryTabs from './CategoryTabs';
 import GroupCard from './GroupCard';
 import PassCountdown from './PassCountdown';
 import StartDateButton from './StartDateButton';
-import CertificateTracker from './CertificateTracker';
 import { CATEGORIES } from '../data/categories';
 import ProgressOverview from './ProgressOverview';
 import { ProgressIcon, GroupsIcon, TodayIcon, SettingsIcon } from './Icons';
@@ -152,7 +151,6 @@ export default function MobileLayout({
                 <button className="btn-export" onClick={onExport}>Export Data</button>
                 <button className="btn-import" onClick={onImport}>Import Data</button>
               </div>
-              <CertificateTracker groups={groups} />
             </motion.div>
           )}
         </AnimatePresence>

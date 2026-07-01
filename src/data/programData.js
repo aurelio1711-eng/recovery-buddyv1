@@ -11,8 +11,11 @@ export const CLINICAL_GROUPS = [
   { id: 'wellness-group', name: 'Wellness Group', required: 16, category: 'clinical', completed: 0 },
 ];
 
+export const ORIENTATION_GROUPS = [
+  { id: 'orientation', name: 'Orientation Groups', required: 12, category: 'orientation', completed: 0 },
+];
+
 export const MANDATORY_GROUPS = [
-  { id: 'orientation', name: 'Orientation Group', required: 1, category: 'mandatory', completed: 0, note: 'Schedule annotations noted' },
   { id: 'community-meetings', name: 'Community Meetings', required: 999, category: 'mandatory', recurring: true, completed: 0, note: 'Daily/weekly ongoing' },
   { id: 'big-book', name: 'Big Book Study', required: 999, category: 'mandatory', recurring: true, completed: 0, note: 'Ongoing study group' },
   { id: 'step-study', name: 'Step Study', required: 999, category: 'mandatory', recurring: true, completed: 0, note: 'Ongoing step work' },
@@ -30,6 +33,7 @@ export const SUPPORT_GROUPS = [
 ];
 
 export const ALL_GROUPS = [
+  ...ORIENTATION_GROUPS,
   ...CLINICAL_GROUPS,
   ...MANDATORY_GROUPS,
   ...AFTER_30_DAYS,

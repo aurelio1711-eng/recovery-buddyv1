@@ -12,7 +12,6 @@ import ProgressOverview from './ProgressOverview';
 import ToastContainer from './ToastContainer';
 import PassCountdown from './PassCountdown';
 import StartDateButton from './StartDateButton';
-import CertificateTracker from './CertificateTracker';
 import MobileLayout from './MobileLayout';
 import './Dashboard.css';
 
@@ -326,14 +325,6 @@ export default function Dashboard() {
       >
         <button className="btn-export" onClick={handleExport}>Export Data</button>
         <button className="btn-import" onClick={handleImport}>Import Data</button>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.22 }}
-      >
-        <CertificateTracker groups={groups} />
       </motion.div>
 
       <motion.div
