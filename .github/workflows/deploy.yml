@@ -20,9 +20,11 @@ jobs:
 
       - run: npm run build
 
-      - uses: vercel/actions/deploy@v1
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+      - name: Deploy to Vercel
+        run: |
+          npx vercel deploy \
+            --prebuilt \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }} \
+            ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} \
+            --yes
