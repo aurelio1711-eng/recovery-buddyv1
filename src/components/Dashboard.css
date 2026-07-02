@@ -30,6 +30,9 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .progress-ring {
@@ -983,6 +986,13 @@
   box-shadow: var(--shadow-md);
 }
 
+.btn-danger {
+  background: var(--color-danger) !important;
+}
+.btn-danger:hover {
+  background: var(--color-danger-dark) !important;
+}
+
 /* ─── Mobile Layout ─── */
 .mobile-layout {
   display: flex;
@@ -1013,6 +1023,9 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .mobile-header-right {

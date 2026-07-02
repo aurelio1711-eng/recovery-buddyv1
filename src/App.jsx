@@ -1,11 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Analytics } from '@vercel/analytics/react';
+import { FlagValues } from '@vercel/flags/react';
 import { MotionConfig, AnimatePresence, motion } from 'motion/react';
 import ErrorBoundary from './components/ErrorBoundary';
-import Dashboard from './components/Dashboard';
 import Landing from './components/Landing';
+import { flags } from './flags';
+
+const Dashboard = lazy(() => import('./components/Dashboard'));
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
 
   return (
     <ErrorBoundary>
@@ -19,7 +33,9 @@ function App() {
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <Dashboard />
+              <Suspense fallback={<div className="landing" style={{ minHeight: '100dvh' }} />}>
+                <Dashboard />
+              </Suspense>
             </motion.div>
           ) : (
             <motion.div
@@ -34,6 +50,18 @@ function App() {
           )}
         </AnimatePresence>
       </MotionConfig>
+
+      <button
+        className="dark-toggle"
+        onClick={() => setDarkMode((v) => !v)}
+        aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <span className="dark-toggle-icon">{darkMode ? '☀️' : '🌙'}</span>
+        <span className="dark-toggle-label">{darkMode ? 'Light' : 'Dark'}</span>
+      </button>
+      <Analytics />
+      <FlagValues values={flags} />
+      <div className="dev-banner">This site is still in development</div>
     </ErrorBoundary>
   );
 }

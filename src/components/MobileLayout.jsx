@@ -44,7 +44,7 @@ export default function MobileLayout({
     <div className="mobile-layout">
       <header className="mobile-header">
         <div className="mobile-header-top">
-          <h1 className="mobile-title">Recovery Tracker</h1>
+          <h1 className="mobile-title">Recovery Buddy</h1>
           <div className="mobile-header-right">
             <span className={`time-badge ${nycTimeReady ? 'live' : 'fallback'}`}>
               {nycTimeReady ? 'NYC' : 'Local'}

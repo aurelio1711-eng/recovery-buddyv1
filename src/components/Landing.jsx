@@ -1,12 +1,12 @@
 import { motion } from 'motion/react';
 import './Landing.css';
+import logo from '../RB.webp';
 
 const spring = { type: 'spring', stiffness: 120, damping: 16, mass: 0.8 };
 
 const features = [
   { icon: '⊞', title: 'Track Groups', desc: 'Log attendance across clinical and non-clinical sessions' },
   { icon: '◎', title: 'Monitor Progress', desc: 'Visual overview of completed vs. required sessions' },
-  { icon: '⬡', title: 'Earn Certificates', desc: 'Automatic certificate tracking as you complete programs' },
   { icon: '⟡', title: 'Weekend Pass', desc: 'Work toward your 30-day pass eligibility milestone' },
 ];
 
@@ -29,7 +29,7 @@ export default function Landing({ onStart }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring, delay: 0.05 }}
         >
-          <span className="landing-logo">⟡</span>
+          <img src={logo} width="110" height="110" alt="Recovery Buddy" className="landing-logo" fetchpriority="high" />
           <h1 className="landing-title">Recovery Buddy</h1>
           <p className="landing-subtitle">
             Your personal companion for tracking recovery program attendance

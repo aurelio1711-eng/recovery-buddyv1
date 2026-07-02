@@ -45,9 +45,8 @@
 }
 
 .landing-logo {
-  font-size: 2.75rem;
-  line-height: 1;
-  color: var(--color-primary);
+  width: clamp(64px, 12vw, 128px);
+  height: clamp(64px, 12vw, 128px);
   filter: drop-shadow(0 0 12px rgba(15,118,110,0.4));
 }
 

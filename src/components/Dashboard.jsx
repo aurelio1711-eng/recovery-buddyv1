@@ -1,23 +1,21 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { getAllGroups } from '../data/programData';
-import { CATEGORIES } from '../data/categories';
 import { loadProgram, saveProgram, addCheckIn, hasCheckIn, removeCheckIn, getCheckInsForDate, exportData, importData, validateImportData } from '../services/storage';
 import { initNycTime, getNycTimestamp, getLocalTimestamp, getToday } from '../services/nycTime';
 import useMediaQuery from '../hooks/useMediaQuery';
-import GroupCard from './GroupCard';
 import DailyCheckIn from './DailyCheckIn';
-import CategoryTabs from './CategoryTabs';
 import ProgressOverview from './ProgressOverview';
 import ToastContainer from './ToastContainer';
 import PassCountdown from './PassCountdown';
-import StartDateButton from './StartDateButton';
+import NavMenu from './NavMenu';
+import GroupsPage from './GroupsPage';
+import SettingsPage from './SettingsPage';
 import MobileLayout from './MobileLayout';
 import './Dashboard.css';
 
-// Main orchestrator component — manages all top-level state (groups, check-ins, time, modals)
-// and coordinates child components. Renders a desktop layout or delegates to MobileLayout.
 export default function Dashboard() {
+  const [page, setPage] = useState('dashboard');
   const [groups, setGroups] = useState([]);
   const [activeCategory, setActiveCategory] = useState('clinical');
   const [showCheckInModal, setShowCheckInModal] = useState(false);
@@ -30,7 +28,6 @@ export default function Dashboard() {
   const [toasts, setToasts] = useState([]);
   const [showWelcome, setShowWelcome] = useState(() => !loadProgram());
 
-  // Show a toast notification, optionally with an undo callback that fires on click
   const addToast = useCallback((message, undoHandler) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, undoHandler }]);
@@ -39,10 +36,8 @@ export default function Dashboard() {
     }, 4000);
   }, []);
 
-  // Refresh the list of today's check-ins from storage
   const loadTodayCheckIns = () => setTodayCheckIns(getCheckInsForDate());
 
-  // Initialize NYC time sync, load saved groups or seed defaults
   useEffect(() => {
     initNycTime().then(ready => setNycTimeReady(ready));
     loadTodayCheckIns();
@@ -56,7 +51,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Tick the clock every second; re-sync on visibility change to reduce background load
   useEffect(() => {
     const tick = () => {
       setLocalTime(getLocalTimestamp());
@@ -69,7 +63,6 @@ export default function Dashboard() {
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisibility); };
   }, []);
 
-  // Record a check-in for a group, update its completed count, and show a toast with undo
   const handleCheckIn = (groupId, date, notes) => {
     const alreadyCheckedIn = hasCheckIn(groupId, date);
     addCheckIn(groupId, date, notes);
@@ -94,7 +87,6 @@ export default function Dashboard() {
     setRefreshKey(k => k + 1);
   };
 
-  // Undo a check-in — removes the record and decrements the group's completed count
   const handleCheckOut = (groupId) => {
     removeCheckIn(groupId);
     setGroups(prev => {
@@ -108,7 +100,6 @@ export default function Dashboard() {
     setRefreshKey(k => k + 1);
   };
 
-  // Download all data as a JSON file via a temporary anchor element
   const handleExport = () => {
     const data = exportData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -121,7 +112,8 @@ export default function Dashboard() {
     addToast('Data exported successfully');
   };
 
-  // Open a file picker, parse the selected JSON, and import data into storage
+  const MAX_IMPORT_SIZE = 5 * 1024 * 1024; // 5MB limit
+
   const handleImport = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -129,13 +121,17 @@ export default function Dashboard() {
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      if (file.size > MAX_IMPORT_SIZE) {
+        addToast('Import failed: File is too large (max 5MB)');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
           const data = JSON.parse(ev.target.result);
           const validation = validateImportData(data);
           if (!validation.valid) {
-            addToast(`Import failed: ${validation.errors.join(', ')}`);
+            addToast('Import failed: Invalid data format');
             return;
           }
           importData(data);
@@ -147,7 +143,7 @@ export default function Dashboard() {
           }
           addToast('Data imported successfully');
         } catch (err) {
-          addToast(err.message || 'Invalid file format');
+          addToast('Import failed: Unable to parse file');
         }
       };
       reader.readAsText(file);
@@ -155,7 +151,6 @@ export default function Dashboard() {
     input.click();
   };
 
-  // Undo a check-in from a specific date (used by today's check-ins list)
   const handleUndoTodayCheckIn = (groupId, date) => {
     removeCheckIn(groupId, date);
     setGroups(prev => {
@@ -173,7 +168,6 @@ export default function Dashboard() {
     setRefreshKey(k => k + 1);
   };
 
-  // Reset all groups back to their initial state (clears progress)
   const handleReset = () => {
     const freshGroups = getAllGroups();
     setGroups(freshGroups);
@@ -182,27 +176,18 @@ export default function Dashboard() {
     setRefreshKey(k => k + 1);
   };
 
-  // Force a refresh of pass/date components when settings change
   const handleSettingsChange = () => {
     setRefreshKey(k => k + 1);
   };
 
-  // Memoized: groups filtered by the active category tab
-  const filteredGroups = useMemo(() => groups.filter(g => g.category === activeCategory), [groups, activeCategory]);
-
-  // Memoized: total required sessions (excluding recurring groups)
   const totalRequired = useMemo(() => groups
     .filter(g => g.required !== 999)
     .reduce((sum, g) => sum + (g.required || 0), 0), [groups]);
-  // Memoized: total completed sessions across all groups
   const totalCompleted = useMemo(() => groups.reduce((sum, g) => sum + (g.completed || 0), 0), [groups]);
-  // Overall progress percentage across all groups
   const overallProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
-  // Responsive breakpoint detection for mobile layout
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Props shared between desktop and mobile layouts to avoid duplication
   const sharedProps = {
     groups,
     activeCategory,
@@ -220,16 +205,16 @@ export default function Dashboard() {
     todayCheckIns,
     onReset: handleReset,
     onSettingsChange: handleSettingsChange,
-    filteredGroups,
+    filteredGroups: groups.filter(g => g.category === activeCategory),
     onExport: handleExport,
     onImport: handleImport,
     onUndoCheckIn: handleUndoTodayCheckIn,
   };
 
-  // Mobile layout with bottom tab navigation
   if (isMobile) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
+        <NavMenu groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNavigate={setPage} currentPage={page} />
         <MobileLayout {...sharedProps} />
         {showCheckInModal && selectedGroup && (
           <DailyCheckIn
@@ -246,9 +231,10 @@ export default function Dashboard() {
   const spring = { type: 'spring', stiffness: 150, damping: 18, mass: 0.8 };
   const springSnap = { type: 'spring', stiffness: 300, damping: 22 };
 
-  // Desktop layout with full sidebar/header arrangement
   return (
     <motion.div className="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      <NavMenu groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNavigate={setPage} currentPage={page} />
+
       {showWelcome && (
         <motion.div
           className="welcome-card"
@@ -262,152 +248,108 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <motion.header
-        className="dashboard-header"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.05 }}
-      >
-        <div className="header-content">
-          <h1>Recovery Buddy</h1>
+      <AnimatePresence mode="wait">
+        {page === 'dashboard' && (
           <motion.div
-            className="progress-ring"
-            key={overallProgress}
-            initial={{ scale: 0.85, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={springSnap}
-            style={{ '--progress': `${overallProgress}%` }}
+            key="dashboard"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={spring}
           >
-            <motion.span
-              className="progress-text"
-              key={overallProgress}
-              initial={{ y: 8, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={spring}
+            <motion.header
+              className="dashboard-header"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...spring, delay: 0.05 }}
             >
-              {overallProgress}%
-            </motion.span>
+              <div className="header-content">
+                <h1>Recovery Buddy</h1>
+                <motion.div
+                  className="progress-ring"
+                  key={overallProgress}
+                  initial={{ scale: 0.85, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={springSnap}
+                  style={{ '--progress': `${overallProgress}%` }}
+                >
+                  <motion.span
+                    className="progress-text"
+                    key={overallProgress}
+                    initial={{ y: 8, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={spring}
+                  >
+                    {overallProgress}%
+                  </motion.span>
+                </motion.div>
+              </div>
+              <div className="header-meta">
+                <span className={`time-badge ${nycTimeReady ? 'live' : 'fallback'}`}>
+                  {nycTimeReady ? 'NYC' : 'Local'}
+                </span>
+                <span className="clock-display">
+                  <span className="clock-local">{localTime}</span>
+                  <span className="clock-nyc">{nycTime}</span>
+                </span>
+                <p className="progress-summary">{totalCompleted} of {totalRequired} required sessions completed</p>
+              </div>
+            </motion.header>
+
+            <PassCountdown refreshKey={refreshKey} />
+
+            <ProgressOverview groups={groups} />
+
+            {todayCheckIns.length > 0 ? (
+              <section className="today-checkins">
+                <h2>Today's Check-Ins</h2>
+                <ul className="checkin-list">
+                  {todayCheckIns.map(ci => (
+                    <motion.li
+                      key={`${ci.groupId}-${ci.date}`}
+                      className="checkin-item"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={spring}
+                    >
+                      <span className="checkin-group">{ci.groupId.replace(/-/g, ' ')}</span>
+                      <span className="checkin-time">{new Date(ci.timestamp).toLocaleTimeString()}</span>
+                      {ci.notes && <span className="checkin-notes">— {ci.notes}</span>}
+                      <button className="checkin-undo-btn" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
+                    </motion.li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <div className="today-empty">
+                No check-ins recorded for today
+              </div>
+            )}
           </motion.div>
-        </div>
-        <div className="header-meta">
-          <span className={`time-badge ${nycTimeReady ? 'live' : 'fallback'}`}>
-            {nycTimeReady ? 'NYC' : 'Local'}
-          </span>
-          <span className="clock-display">
-            <span className="clock-local">{localTime}</span>
-            <span className="clock-nyc">{nycTime}</span>
-          </span>
-          <p className="progress-summary">{totalCompleted} of {totalRequired} required sessions completed</p>
-        </div>
-      </motion.header>
+        )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.1 }}
-      >
-        <PassCountdown refreshKey={refreshKey} />
-      </motion.div>
+        {page.startsWith('groups-') && (
+          <GroupsPage
+            key={page}
+            groups={groups}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+            onGroupCheckIn={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }}
+            onGroupCheckOut={handleCheckOut}
+            canGroupCheckIn={(group) => group.recurring || group.completed < group.required}
+          />
+        )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.14 }}
-      >
-        <StartDateButton onReset={handleReset} onSettingsChange={handleSettingsChange} />
-      </motion.div>
-
-      <motion.div
-        className="export-import-bar"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.18 }}
-      >
-        <button className="btn-export" onClick={handleExport}>Export Data</button>
-        <button className="btn-import" onClick={handleImport}>Import Data</button>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.26 }}
-      >
-        <ProgressOverview groups={groups} />
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.3 }}
-      >
-        <CategoryTabs 
-          categories={CATEGORIES} 
-          activeCategory={activeCategory} 
-          onChange={setActiveCategory}
-          groups={groups}
-        />
-      </motion.div>
-
-      <motion.section
-        className="groups-section"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ...spring, delay: 0.34 }}
-      >
-        <motion.div
-          className="groups-grid"
-          initial="hidden"
-          animate="visible"
-          variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
-        >
-          {filteredGroups.map((group, i) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              index={i}
-              onCheckIn={() => { setSelectedGroup(group); setShowCheckInModal(true); }}
-              onCheckOut={() => handleCheckOut(group.id)}
-              canCheckIn={group.recurring || group.completed < group.required}
-            />
-          ))}
-        </motion.div>
-      </motion.section>
-
-      {todayCheckIns.length > 0 ? (
-        <motion.section
-          className="today-checkins"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: 0.38 }}
-        >
-          <h2>Today's Check-Ins</h2>
-          <ul className="checkin-list">
-            {todayCheckIns.map(ci => (
-              <motion.li
-                key={`${ci.groupId}-${ci.date}`}
-                className="checkin-item"
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={spring}
-              >
-                <span className="checkin-group">{ci.groupId.replace(/-/g, ' ')}</span>
-                <span className="checkin-time">{new Date(ci.timestamp).toLocaleTimeString()}</span>
-                {ci.notes && <span className="checkin-notes">— {ci.notes}</span>}
-                <button className="checkin-undo-btn" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
-              </motion.li>
-            ))}
-          </ul>
-        </motion.section>
-      ) : (
-        <motion.div
-          className="today-empty"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ...spring, delay: 0.38 }}
-        >
-          No check-ins recorded for today
-        </motion.div>
-      )}
+        {page === 'settings' && (
+          <SettingsPage
+            key="settings"
+            onExport={handleExport}
+            onImport={handleImport}
+            onReset={handleReset}
+            onSettingsChange={handleSettingsChange}
+          />
+        )}
+      </AnimatePresence>
 
       {showCheckInModal && selectedGroup && (
         <DailyCheckIn

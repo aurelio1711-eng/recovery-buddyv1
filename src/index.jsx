@@ -12,5 +12,9 @@ root.render(
   </React.StrictMode>
 );
 
-// Report web vitals performance metrics (console.log or analytics endpoint)
-reportWebVitals();
+// Report web vitals — deferred off the critical path
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() => reportWebVitals());
+} else {
+  setTimeout(reportWebVitals, 1000);
+}

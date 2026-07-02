@@ -94,6 +94,23 @@ code {
   border: 0;
 }
 
+/* ─── Dev banner ─── */
+.dev-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: #fff;
+  text-align: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+}
+
 /* ─── Skip to content link ─── */
 .skip-link {
   position: fixed;
@@ -111,6 +128,48 @@ code {
 }
 .skip-link:focus {
   top: 1rem;
+}
+
+/* ─── Dark mode toggle button ─── */
+.dark-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem 0.5rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(8px);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.dark-toggle:hover {
+  background: var(--color-hover-bg);
+  color: var(--color-text);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-xl);
+}
+.dark-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.dark-toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+.dark-toggle-label {
+  line-height: 1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -137,4 +196,28 @@ code {
     --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.2);
     --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.2);
   }
+}
+
+:root.dark {
+  --color-bg: #0B1121;
+  --color-surface: #111827;
+  --color-text: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-text-lighter: #475569;
+  --color-border: #1E293B;
+  --color-border-hover: #334155;
+  --color-border-input: #475569;
+  --color-hover-bg: #1E293B;
+  --color-checkin-bg: #0F172A;
+  --color-primary-light: #134E4A;
+  --color-primary-lighter: #0F3D39;
+  --color-secondary-light: #155E75;
+  --color-success-light: #14532D;
+  --color-warning-light: #451A03;
+  --color-danger-light: #450A0A;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -2px rgba(0,0,0,0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.3), 0 4px 6px -4px rgba(0,0,0,0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.4), 0 8px 10px -6px rgba(0,0,0,0.2);
 }
