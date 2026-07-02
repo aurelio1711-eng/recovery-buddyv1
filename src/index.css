@@ -111,6 +111,12 @@ code {
   backdrop-filter: blur(4px);
 }
 
+@media (max-width: 768px) {
+  .dev-banner {
+    bottom: 3.25rem;
+  }
+}
+
 /* ─── Skip to content link ─── */
 .skip-link {
   position: fixed;
@@ -128,48 +134,6 @@ code {
 }
 .skip-link:focus {
   top: 1rem;
-}
-
-/* ─── Dark mode toggle button ─── */
-.dark-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.9rem 0.5rem 0.7rem;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(8px);
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-color 0.2s;
-  -webkit-user-select: none;
-  user-select: none;
-}
-.dark-toggle:hover {
-  background: var(--color-hover-bg);
-  color: var(--color-text);
-  border-color: var(--color-border-hover);
-  box-shadow: var(--shadow-xl);
-}
-.dark-toggle:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-.dark-toggle-icon {
-  font-size: 1rem;
-  line-height: 1;
-}
-.dark-toggle-label {
-  line-height: 1;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -6,6 +6,7 @@
     <link rel="icon" type="image/webp" href="/logo.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0F766E" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.api-ninjas.com https://vitals.vercel-insights.com; script-src 'self' 'unsafe-inline'" />
     <meta
       name="description"
       content="Recovery Buddy — Track your clinical and non-clinical group attendance"
@@ -18,9 +19,9 @@
     <title>Recovery Buddy</title>
   </head>
   <body>
-    <a href="#root" class="skip-link">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <script type="module" src="/src/index.jsx"></script>
+    <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>

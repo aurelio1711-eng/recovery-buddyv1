@@ -50,7 +50,7 @@
 .progress-text {
   font-family: var(--font-mono);
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 800;
   color: var(--color-primary);
 }
 
@@ -101,6 +101,7 @@
 
 .progress-summary {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--color-text-muted);
   letter-spacing: -0.01em;
 }
@@ -467,12 +468,13 @@
 .progress-pct {
   font-family: var(--font-mono);
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-primary);
 }
 
 .progress-detail {
   font-size: 0.8rem;
+  font-weight: 700;
   color: var(--color-text-muted);
   margin-top: 0.4rem;
   display: block;
@@ -638,6 +640,7 @@
 
 .group-card .progress-text {
   font-size: 0.85rem;
+  font-weight: 700;
   color: var(--color-text-muted);
   margin-top: 0.4rem;
   display: flex;
@@ -1068,6 +1071,7 @@
 
 .mobile-progress-summary {
   font-size: 0.75rem;
+  font-weight: 600;
   color: var(--color-text-muted);
 }
 
