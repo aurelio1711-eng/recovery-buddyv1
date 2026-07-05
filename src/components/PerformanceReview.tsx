@@ -6,6 +6,8 @@ import { CATEGORIES } from '../data/categories';
 import { getToday } from '../services/nycTime';
 import type { Group, CheckIn, CategoryAnalytics, Settings } from '../types';
 
+const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
+
 function ReviewIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -21,8 +23,6 @@ interface PerformanceReviewProps {
 }
 
 export default function PerformanceReview({ groups, refreshKey = 0 }: PerformanceReviewProps) {
-  const spring = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
-
   const groupMap: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
     groups.forEach(g => { map[g.id] = g.name; });
@@ -46,7 +46,7 @@ export default function PerformanceReview({ groups, refreshKey = 0 }: Performanc
   const checkIns: CheckIn[] = useMemo(() => {
     const data = loadCheckIns();
     return Object.values(data).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-  }, [groups, refreshKey]);
+  }, [refreshKey]);
 
   const weekCheckIns: CheckIn[] = useMemo(() => {
     const start = format(weekStart, 'yyyy-MM-dd');
@@ -56,13 +56,13 @@ export default function PerformanceReview({ groups, refreshKey = 0 }: Performanc
       .sort((a, b) => a.date.localeCompare(b.date) || (a.timestamp || 0) - (b.timestamp || 0));
   }, [checkIns, weekStart, weekEnd]);
 
-  const settings: Settings = useMemo(() => loadSettings(), [groups, refreshKey]);
+  const settings: Settings = useMemo(() => loadSettings(), [refreshKey]);
 
-  const daysSinceStart: number = useMemo(() => getDaysSinceProgramStart(), [groups, refreshKey]);
+  const daysSinceStart: number = useMemo(() => getDaysSinceProgramStart(), [refreshKey]);
 
-  const eligibleForPass: boolean = useMemo(() => isEligibleForPass(), [groups, refreshKey]);
+  const eligibleForPass: boolean = useMemo(() => isEligibleForPass(), [refreshKey]);
 
-  const daysUntilPass: number = useMemo(() => getDaysUntilNextPass(), [groups, refreshKey]);
+  const daysUntilPass: number = useMemo(() => getDaysUntilNextPass(), [refreshKey]);
 
   const totalCheckIns: number = checkIns.length;
   const earliestDate: string | null = checkIns.length > 0 ? checkIns[checkIns.length - 1].date : null;
@@ -98,7 +98,7 @@ export default function PerformanceReview({ groups, refreshKey = 0 }: Performanc
       className="max-w-[960px]"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={spring}
+      transition={SPRING}
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -226,8 +226,8 @@ export default function PerformanceReview({ groups, refreshKey = 0 }: Performanc
             <p className="text-sm text-text-muted">No weekend passes claimed yet</p>
           ) : (
             <ul className="flex flex-col gap-1">
-              {settings.passHistory.slice().reverse().map((date, i) => (
-                <li key={i} className="flex items-center justify-between py-1.5 text-sm">
+              {settings.passHistory.slice().reverse().map((date) => (
+                <li key={date} className="flex items-center justify-between py-1.5 text-sm">
                   <span className="text-text">Weekend Pass</span>
                   <span className="text-text-muted text-xs">{date}</span>
                 </li>
@@ -243,9 +243,9 @@ export default function PerformanceReview({ groups, refreshKey = 0 }: Performanc
       <section className="bg-surface rounded-[var(--radius-md)] border border-border p-4 mb-4">
         <h2 className="font-heading text-sm font-semibold text-text mb-3">Weekly Attendance</h2>
         <div className="flex items-center justify-center gap-3 mb-3">
-          <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setWeekOffset(o => o - 1)} aria-label="Previous week">&larr; Prev</button>
+          <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setWeekOffset(o => o - 1)} aria-label="Previous week">&larr; Prev</button>
           <span className="text-xs font-medium text-text">{weekLabel}</span>
-          <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setWeekOffset(o => o + 1)} aria-label="Next week">Next &rarr;</button>
+          <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setWeekOffset(o => o + 1)} aria-label="Next week">Next &rarr;</button>
         </div>
         {weekCheckIns.length === 0 ? (
           <p className="text-sm text-text-muted">No check-ins this week</p>

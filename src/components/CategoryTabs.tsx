@@ -18,7 +18,7 @@ const CategoryTabs = memo(function CategoryTabs({ categories, activeCategory, on
         const completed = groups.filter(g => g.category === cat.id && g.completed > 0).length;
         const isActive = activeCategory === cat.id;
         return (
-          <m.button
+          <m.button type="button"
             key={cat.id}
             className={`relative flex items-center justify-center rounded-[var(--radius-sm)] cursor-pointer border-none transition-all duration-200 ${isActive ? 'bg-primary text-white px-3 py-2 gap-1.5' : 'bg-surface border border-border text-text-secondary hover:bg-hover-bg w-10 h-10'}`}
             onClick={() => onChange(cat.id)}

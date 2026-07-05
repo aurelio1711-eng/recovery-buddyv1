@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface SignaturePadProps {
   onSave: (dataUrl: string) => void;
@@ -7,7 +7,7 @@ interface SignaturePadProps {
 
 export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const isDrawingRef = useRef(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -54,11 +54,11 @@ export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
     if (!ctx) return;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    setIsDrawing(true);
+    isDrawingRef.current = true;
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    if (!isDrawingRef.current) return;
     e.preventDefault();
     const { x, y } = getPos(e);
     const canvas = canvasRef.current;
@@ -71,7 +71,7 @@ export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
 
   const stopDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    setIsDrawing(false);
+    isDrawingRef.current = false;
   };
 
   const clear = () => {
@@ -109,7 +109,9 @@ export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
       className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 safe-area-inset-bottom"
       role="dialog"
       aria-modal="true"
+      aria-label="Signature"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       onTouchStart={handleTouchStart}
     >
       <div
@@ -119,7 +121,7 @@ export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="font-heading text-base font-semibold text-text">Get Signature</h2>
-          <button className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
+          <button type="button" className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
         </div>
         <div className="px-5 py-4">
           <p className="mb-3 text-sm text-text-muted">Please sign below:</p>
@@ -138,8 +140,8 @@ export default function SignaturePad({ onSave, onClose }: SignaturePadProps) {
           />
         </div>
         <div className="flex justify-end gap-3 px-5 py-4 border-t border-border">
-          <button className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 touch-target" onClick={clear}>Clear</button>
-          <button className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 touch-target" onClick={handleSave}>Save Signature</button>
+          <button type="button" className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 touch-target" onClick={clear}>Clear</button>
+          <button type="button" className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 touch-target" onClick={handleSave}>Save Signature</button>
         </div>
       </div>
     </div>

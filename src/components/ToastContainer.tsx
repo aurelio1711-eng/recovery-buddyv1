@@ -21,7 +21,7 @@ export default function ToastContainer({ toasts, onUndo }: Props) {
           >
             <span className="flex-1">{t.message}</span>
             {t.undoHandler && (
-              <button className="text-xs font-bold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark whitespace-nowrap touch-target" onClick={() => onUndo(t)} aria-label={`Undo: ${t.message}`}>Undo</button>
+              <button type="button" className="text-xs font-bold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark whitespace-nowrap touch-target" onClick={() => onUndo(t)} aria-label={`Undo: ${t.message}`}>Undo</button>
             )}
           </m.div>
         ))}

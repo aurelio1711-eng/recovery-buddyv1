@@ -36,34 +36,41 @@ export default function SearchModal({ groups, onClose, onGroupSelect, onDateSele
     const q = query.toLowerCase().trim();
     if (!q) return [];
 
-    const groupResults: SearchResult[] = groups
-      .filter(g => g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q) || (g.note && g.note.toLowerCase().includes(q)))
-      .map(g => ({
-        type: 'group' as const,
-        id: g.id,
-        title: g.name,
-        subtitle: `${g.completed}/${g.required === 999 ? '∞' : g.required} sessions • ${g.category}`,
-      }));
+    const groupResults: SearchResult[] = [];
+    const checkInResults: SearchResult[] = [];
 
-    const checkInResults: SearchResult[] = allCheckIns
-      .filter(ci => {
-        const groupName = groups.find(g => g.id === ci.groupId)?.name || ci.groupId;
-        return (
-          groupName.toLowerCase().includes(q) ||
-          ci.groupId.toLowerCase().includes(q) ||
-          ci.date.includes(q) ||
-          (ci.notes && ci.notes.toLowerCase().includes(q))
-        );
-      })
-      .slice(0, 20)
-      .map(ci => ({
-        type: 'check-in' as const,
-        id: `${ci.groupId}-${ci.date}`,
-        title: groups.find(g => g.id === ci.groupId)?.name || ci.groupId.replace(/-/g, ' '),
-        subtitle: ci.notes || 'No notes',
-        date: ci.date,
-        groupId: ci.groupId,
-      }));
+    for (const g of groups) {
+      if (g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q) || (g.note && g.note.toLowerCase().includes(q))) {
+        groupResults.push({
+          type: 'group',
+          id: g.id,
+          title: g.name,
+          subtitle: `${g.completed}/${g.required === 999 ? '∞' : g.required} sessions • ${g.category}`,
+        });
+      }
+    }
+
+    let checkInCount = 0;
+    for (const ci of allCheckIns) {
+      if (checkInCount >= 20) break;
+      const groupName = groups.find(g => g.id === ci.groupId)?.name || ci.groupId;
+      if (
+        groupName.toLowerCase().includes(q) ||
+        ci.groupId.toLowerCase().includes(q) ||
+        ci.date.includes(q) ||
+        (ci.notes && ci.notes.toLowerCase().includes(q))
+      ) {
+        checkInResults.push({
+          type: 'check-in',
+          id: `${ci.groupId}-${ci.date}`,
+          title: groups.find(g => g.id === ci.groupId)?.name || ci.groupId.replace(/-/g, ' '),
+          subtitle: ci.notes || 'No notes',
+          date: ci.date,
+          groupId: ci.groupId,
+        });
+        checkInCount++;
+      }
+    }
 
     return [...groupResults, ...checkInResults].slice(0, 30);
   }, [query, groups, allCheckIns]);
@@ -96,6 +103,7 @@ export default function SearchModal({ groups, onClose, onGroupSelect, onDateSele
       aria-modal="true"
       aria-label="Search"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
     >
       <m.div
         className="bg-surface rounded-[var(--radius-lg)] border border-border w-full max-w-lg shadow-xl"
@@ -114,8 +122,9 @@ export default function SearchModal({ groups, onClose, onGroupSelect, onDateSele
             onChange={e => setQuery(e.target.value)}
             placeholder="Search groups, notes, dates..."
             className="flex-1 bg-transparent border-none text-sm text-text font-body outline-none placeholder:text-text-muted"
+            aria-label="Search"
           />
-          <button
+          <button type="button"
             className="text-xs font-semibold py-1 px-2 rounded bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150"
             onClick={onClose}
           >
@@ -141,7 +150,7 @@ export default function SearchModal({ groups, onClose, onGroupSelect, onDateSele
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.02 * i }}
                 >
-                  <button
+                  <button type="button"
                     className="w-full flex items-center gap-3 px-5 py-3 text-left bg-transparent border-none cursor-pointer hover:bg-hover-bg transition-colors duration-150"
                     onClick={() => {
                       if (r.type === 'group' && onGroupSelect) {

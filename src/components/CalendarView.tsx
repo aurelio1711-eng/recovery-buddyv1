@@ -5,12 +5,22 @@ import { loadCheckIns } from '../services/storage';
 import { getToday } from '../services/nycTime';
 import type { CheckIn } from '../types';
 
+const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function getIntensity(count: number): string {
+  if (count === 0) return 'bg-border/50';
+  if (count <= 2) return 'bg-primary/20';
+  if (count <= 4) return 'bg-primary/40';
+  if (count <= 6) return 'bg-primary/60';
+  return 'bg-primary/80';
+}
+
 interface CalendarViewProps {
   refreshKey?: number;
 }
 
 export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
-  const spring = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
   const today = parseISO(getToday());
   const [currentMonth, setCurrentMonth] = useState(today);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -18,7 +28,7 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
   const allCheckIns = useMemo(() => {
     const data = loadCheckIns();
     return Object.values(data);
-  }, [refreshKey]);
+  }, []);
 
   const checkInsByDate = useMemo(() => {
     const map: Record<string, CheckIn[]> = {};
@@ -43,22 +53,12 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
 
   const selectedCheckIns = selectedDay ? checkInsByDate[format(selectedDay, 'yyyy-MM-dd')] || [] : [];
 
-  const getIntensity = (count: number): string => {
-    if (count === 0) return 'bg-border/50';
-    if (count <= 2) return 'bg-primary/20';
-    if (count <= 4) return 'bg-primary/40';
-    if (count <= 6) return 'bg-primary/60';
-    return 'bg-primary/80';
-  };
-
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
   return (
     <m.div
       className="max-w-[720px]"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={spring}
+      transition={SPRING}
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
@@ -69,14 +69,14 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-5">
         <div className="flex items-center justify-between mb-5">
-          <button
+          <button type="button"
             className="text-sm font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150"
             onClick={() => setCurrentMonth(prev => subMonths(prev, 1))}
           >
             &larr; Prev
           </button>
           <h2 className="font-heading text-base font-semibold text-text">{format(currentMonth, 'MMMM yyyy')}</h2>
-          <button
+          <button type="button"
             className="text-sm font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150"
             onClick={() => setCurrentMonth(prev => addMonths(prev, 1))}
           >
@@ -85,13 +85,13 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
         </div>
 
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {weekDays.map(d => (
+          {WEEK_DAYS.map(d => (
             <div key={d} className="text-center text-xs font-semibold text-text-muted py-1">{d}</div>
           ))}
         </div>
 
         <div className="grid grid-cols-7 gap-1">
-          {days.map((d, i) => {
+          {days.map((d) => {
             const dateStr = format(d, 'yyyy-MM-dd');
             const dayCheckIns = checkInsByDate[dateStr] || [];
             const count = dayCheckIns.length;
@@ -101,7 +101,8 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
 
             return (
               <button
-                key={i}
+                type="button"
+                key={dateStr}
                 className={`relative aspect-square flex flex-col items-center justify-center rounded-[var(--radius-sm)] text-sm transition-all duration-150 cursor-pointer border-none
                   ${inMonth ? 'text-text' : 'text-text-lighter'}
                   ${isToday ? 'ring-2 ring-primary' : ''}
@@ -150,7 +151,7 @@ export default function CalendarView({ refreshKey = 0 }: CalendarViewProps) {
           className="mt-4 bg-surface rounded-[var(--radius-lg)] border border-border p-5"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={spring}
+          transition={SPRING}
         >
           <h3 className="font-heading text-sm font-semibold text-text mb-3">
             {format(selectedDay, 'EEEE, MMMM d, yyyy')}

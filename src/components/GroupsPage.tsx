@@ -103,7 +103,6 @@ export default function GroupsPage({ groups, activeCategory, onCategoryChange, o
                       onChange={(e) => setNewGroupName(e.target.value)}
                       placeholder="e.g., Personal Therapy, Meditation Group"
                       className="text-sm px-3 py-2 rounded-[var(--radius-sm)] border border-border-input bg-background text-text font-body focus-visible:outline-2 focus-visible:outline-primary"
-                      autoFocus
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -128,11 +127,11 @@ export default function GroupsPage({ groups, activeCategory, onCategoryChange, o
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-text">Signature</label>
+                    <span className="text-sm font-medium text-text">Signature</span>
                     {signature ? (
                       <div className="flex items-center gap-3">
                         <img src={signature} alt="Signature" className="h-10 border border-border rounded-[var(--radius-sm)]" />
-                        <button
+                        <button type="button"
                           className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150"
                           onClick={() => setSignature(null)}
                         >
@@ -140,7 +139,7 @@ export default function GroupsPage({ groups, activeCategory, onCategoryChange, o
                         </button>
                       </div>
                     ) : (
-                      <button
+                      <button type="button"
                         className="w-full py-2.5 px-5 border-2 border-dashed border-border rounded-[var(--radius-sm)] bg-transparent cursor-pointer text-text-secondary font-semibold text-sm font-body transition-all duration-200 hover:border-primary"
                         onClick={() => setShowSignature(true)}
                       >
@@ -149,13 +148,13 @@ export default function GroupsPage({ groups, activeCategory, onCategoryChange, o
                     )}
                   </div>
                   <div className="flex justify-end gap-2 pt-2">
-                    <button
+                    <button type="button"
                       className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150"
                       onClick={() => { setShowAddGroup(false); setShowSignature(false); }}
                     >
                       Cancel
                     </button>
-                    <button
+                    <button type="button"
                       className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150"
                       onClick={handleAddGroup}
                       disabled={!newGroupName.trim()}
@@ -166,7 +165,7 @@ export default function GroupsPage({ groups, activeCategory, onCategoryChange, o
                 </div>
               </m.div>
             ) : (
-              <m.button
+              <m.button type="button"
                 key="add-group-btn"
                 className="flex items-center justify-center gap-2 border-2 border-dashed border-border rounded-[var(--radius-md)] bg-transparent cursor-pointer text-text-secondary font-semibold text-sm font-body transition-all duration-200 hover:border-primary hover:text-primary min-h-[120px]"
                 onClick={() => setShowAddGroup(true)}

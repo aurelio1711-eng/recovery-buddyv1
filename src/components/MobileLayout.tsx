@@ -130,15 +130,15 @@ export default function MobileLayout({
               transition={{ duration: 0.2 }}
             >
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] bg-primary text-white border-none cursor-pointer hover:bg-primary-dark transition-colors duration-150" onClick={onBulkCheckIn}>
+                <button type="button" className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] bg-primary text-white border-none cursor-pointer hover:bg-primary-dark transition-colors duration-150" onClick={onBulkCheckIn}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   Bulk Check-In
                 </button>
-                <button className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onSearch}>
+                <button type="button" className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onSearch}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   Search
                 </button>
-                <button className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onPrintReport}>
+                <button type="button" className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onPrintReport}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print
                 </button>
@@ -154,7 +154,7 @@ export default function MobileLayout({
                         <span className="flex-1 font-medium text-text capitalize">{ci.groupId.replace(/-/g, ' ')}</span>
                         <span className="tablaur-nums text-xs text-text-muted">{new Date(ci.timestamp).toLocaleTimeString()}</span>
                         {ci.notes && <span className="text-xs text-text-muted truncate max-w-[120px]">— {ci.notes}</span>}
-                        <button className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark whitespace-nowrap" onClick={() => onUndoCheckIn(ci.groupId, ci.date)}>Undo</button>
+                        <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark whitespace-nowrap" onClick={() => onUndoCheckIn(ci.groupId, ci.date)}>Undo</button>
                       </li>
                     ))}
                   </ul>
@@ -173,8 +173,8 @@ export default function MobileLayout({
             >
               <StartDateButton onReset={onReset} onSettingsChange={onSettingsChange} />
               <div className="flex gap-3">
-                <button className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150" onClick={onExport}>Export Data</button>
-                <button className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] border border-border bg-background text-text cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onImport}>Import Data</button>
+                <button type="button" className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150" onClick={onExport}>Export Data</button>
+                <button type="button" className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] border border-border bg-background text-text cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onImport}>Import Data</button>
               </div>
             </m.div>
           )}
@@ -183,7 +183,7 @@ export default function MobileLayout({
 
       <nav className="shrink-0 bg-surface border-t border-border flex safe-area-inset-bottom" aria-label="Mobile navigation">
         {MOBILE_TABS.map(tab => (
-          <button
+          <button type="button"
             key={tab.id}
             className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium bg-transparent border-none cursor-pointer relative transition-colors duration-150 touch-target ${activeTab === tab.id ? 'text-primary' : 'text-text-muted'}`}
             onClick={() => setActiveTab(tab.id)}

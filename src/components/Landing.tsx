@@ -38,7 +38,7 @@ export default function Landing({ onStart }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...spring, delay: 0.05 }}
         >
-          <img src={logo} width="110" height="110" alt="Recovery Buddy" className="w-[clamp(64px,12vw,128px)] h-[clamp(64px,12vw,128px)] drop-shadow-[0_0_12px_rgba(15,118,110,0.4)]" fetchpriority="high" />
+          <img src={logo} width="110" height="110" alt="Recovery Buddy" className="w-[clamp(64px,12vw,128px)] h-[clamp(64px,12vw,128px)] drop-shadow-[0_0_12px_rgba(15,118,110,0.4)]" fetchPriority="high" />
           <h1 className="font-heading text-[2.5rem] max-sm:text-[2rem] font-bold tracking-tight text-slate-100 leading-tight">
             Recovery Buddy
           </h1>
@@ -73,7 +73,7 @@ export default function Landing({ onStart }: Props) {
           ))}
         </m.section>
 
-        <m.button
+        <m.button type="button"
           className="font-heading text-base font-semibold py-3.5 px-12 max-sm:px-10 max-sm:w-full max-sm:max-w-[300px] border-none rounded-[var(--radius-lg)] bg-primary text-white cursor-pointer tracking-wide shadow-[0_4px_20px_rgba(15,118,110,0.35)] hover:bg-primary-dark hover:shadow-[0_6px_28px_rgba(15,118,110,0.45)] focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[3px] transition-[background,box-shadow] duration-200"
           onClick={onStart}
           initial={{ opacity: 0, y: 16 }}

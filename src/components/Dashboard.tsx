@@ -20,6 +20,9 @@ import SearchModal from './SearchModal';
 import BulkCheckIn from './BulkCheckIn';
 import PrintableReport from './PrintableReport';
 
+const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
+const SPRING_SNAP = { type: 'spring' as const, stiffness: 300, damping: 22 };
+
 interface DashboardProps {
   darkMode: boolean;
   onToggleDark: () => void;
@@ -27,21 +30,24 @@ interface DashboardProps {
 
 export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [page, setPage] = useState<Page>('dashboard');
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<Group[]>(() => {
+    const saved = loadProgram();
+    return saved || getAllGroups();
+  });
   const [activeCategory, setActiveCategory] = useState('clinical');
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [nycTimeReady, setNycTimeReady] = useState(false);
   const [localTime, setLocalTime] = useState('');
   const [nycTime, setNycTime] = useState('');
-  const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>([]);
+  const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>(() => getCheckInsForDate());
   const [refreshKey, setRefreshKey] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showWelcome, setShowWelcome] = useState(() => !loadProgram());
   const [showSearch, setShowSearch] = useState(false);
   const [showBulkCheckIn, setShowBulkCheckIn] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
-  const toastTimeouts = useRef<Map<string, number>>(new Map());
+  const toastTimeouts = useRef<Map<string, number>>(new Map<string, number>());
 
   useEffect(() => {
     return () => {
@@ -64,14 +70,9 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
 
   useEffect(() => {
     initNycTime().then(ready => setNycTimeReady(ready));
-    loadTodayCheckIns();
     const saved = loadProgram();
-    if (saved) {
-      setGroups(saved);
-    } else {
-      const initial = getAllGroups();
-      setGroups(initial);
-      saveProgram(initial);
+    if (!saved) {
+      saveProgram(getAllGroups());
     }
     initializeNotifications();
   }, []);
@@ -301,7 +302,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
             <header className="shrink-0 bg-surface border-b border-border px-4 py-3">
               <div className="flex items-center justify-between">
                 <h1 className="font-heading text-base font-bold text-text">Recovery Buddy</h1>
-                <button className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => setPage('dashboard')}>Back</button>
+                <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => setPage('dashboard')}>Back</button>
               </div>
             </header>
             <main className="flex-1 overflow-y-auto px-4 py-4">
@@ -339,49 +340,46 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     );
   }
 
-  const spring = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
-  const springSnap = { type: 'spring' as const, stiffness: 300, damping: 22 };
-
   return (
     <m.main className="pl-16 max-sm:pl-0" id="main-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
       <NavMenu groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNavigate={setPage} currentPage={page} darkMode={darkMode} onToggleDark={onToggleDark} />
 
       <div className="max-w-5xl mx-auto px-6 py-8 max-sm:px-4 max-sm:py-4">
         {showWelcome && (
-          <m.div className="relative bg-primary-light border border-primary rounded-[var(--radius-md)] p-4 mb-6 pr-10" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={spring}>
+          <m.div className="relative bg-primary-light border border-primary rounded-[var(--radius-md)] p-4 mb-6 pr-10" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
             <h2 className="font-heading text-sm font-bold text-primary-dark mb-1">Welcome to Recovery Buddy</h2>
             <p className="text-xs text-text-secondary leading-relaxed">Track your clinical and non-clinical group attendance. Check in to groups each session, earn certificates upon completion, and track your 30-day weekend pass eligibility.</p>
-            <button className="absolute top-2 right-3 bg-transparent border-none text-lg text-primary cursor-pointer leading-none p-0 hover:text-primary-dark" onClick={() => setShowWelcome(false)} aria-label="Dismiss">&times;</button>
+            <button type="button" className="absolute top-2 right-3 bg-transparent border-none text-lg text-primary cursor-pointer leading-none p-0 hover:text-primary-dark" onClick={() => setShowWelcome(false)} aria-label="Dismiss">&times;</button>
           </m.div>
         )}
 
         <AnimatePresence mode="wait">
           {page === 'dashboard' && (
-            <m.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={spring}>
-              <m.header className="flex items-center justify-between mb-6" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.05 }}>
+            <m.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={SPRING}>
+              <m.header className="flex items-center justify-between mb-6" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.05 }}>
                 <div className="flex items-center gap-4">
                   <h1 className="font-heading text-2xl font-bold text-text">Recovery Buddy</h1>
-                  <m.div className="relative w-14 h-14" key={overallProgress} initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={springSnap}>
+                  <m.div className="relative w-14 h-14" key={overallProgress} initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING_SNAP}>
                     <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
                       <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-border)" strokeWidth="3" />
                       <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeDasharray={`${overallProgress} ${100 - overallProgress}`} strokeLinecap="round" />
                     </svg>
-                    <m.span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-text tabular-nums" key={overallProgress} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={spring}>
+                    <m.span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-text tabular-nums" key={overallProgress} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>
                       {overallProgress}%
                     </m.span>
                   </m.div>
                 </div>
                 <div className="flex items-center gap-3 text-right">
                   <div className="flex items-center gap-1.5">
-                    <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowSearch(true)}>
+                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowSearch(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                       Search
                     </button>
-                    <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowBulkCheckIn(true)}>
+                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowBulkCheckIn(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                       Bulk Check-In
                     </button>
-                    <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowPrintReport(true)}>
+                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowPrintReport(true)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                       Print Report
                     </button>
@@ -404,11 +402,11 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
                     <h2 className="font-heading text-base font-semibold text-text mb-3">Today&apos;s Check-Ins</h2>
                     <ul className="flex flex-col gap-2">
                       {todayCheckIns.map(ci => (
-                        <m.li key={`${ci.groupId}-${ci.date}`} className="flex items-center gap-3 bg-surface rounded-[var(--radius-md)] border border-border p-3" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={spring}>
+                        <m.li key={`${ci.groupId}-${ci.date}`} className="flex items-center gap-3 bg-surface rounded-[var(--radius-md)] border border-border p-3" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}>
                           <span className="flex-1 font-medium text-sm text-text capitalize">{ci.groupId.replace(/-/g, ' ')}</span>
                           <span className="text-xs tabular-nums text-text-muted">{new Date(ci.timestamp).toLocaleTimeString()}</span>
                           {ci.notes && <span className="text-xs text-text-muted truncate max-w-[180px]">— {ci.notes}</span>}
-                          <button className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
+                          <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
                         </m.li>
                       ))}
                     </ul>

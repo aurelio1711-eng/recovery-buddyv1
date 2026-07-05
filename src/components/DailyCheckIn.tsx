@@ -80,6 +80,7 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
       aria-modal="true"
       aria-labelledby="checkin-title"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       onTouchStart={handleTouchStart}
     >
       <div
@@ -89,7 +90,7 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 id="checkin-title" className="font-heading text-base font-semibold text-text">Check In: {group.name}</h2>
-          <button className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
+          <button type="button" className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
         </div>
         <div className="px-5 py-4 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
@@ -114,14 +115,14 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text">Signature</label>
+            <span className="text-sm font-medium text-text">Signature</span>
             {signature ? (
               <div className="flex items-center gap-3">
                 <img src={signature} alt="Signed" className="h-10 border border-border rounded-[var(--radius-sm)]" />
-                <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setSignature(null)}>Remove</button>
+                <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={() => setSignature(null)}>Remove</button>
               </div>
             ) : (
-              <button
+              <button type="button"
                 className="w-full py-2.5 px-5 border-2 border-dashed border-border rounded-[var(--radius-sm)] bg-transparent cursor-pointer text-text-secondary font-semibold text-sm font-body transition-all duration-200 hover:border-primary"
                 onClick={() => setShowSignaturePad(true)}
               >
@@ -131,8 +132,8 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
           </div>
         </div>
         <div className="flex justify-end gap-3 px-5 py-4 border-t border-border">
-          <button className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onClose}>Cancel</button>
-          <button
+          <button type="button" className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onClose}>Cancel</button>
+          <button type="button"
             className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150"
             onClick={() => onSubmit(group.id, selectedDate, notes, signature)}
           >

@@ -5,6 +5,8 @@ import { loadSettings, saveSettings } from '../services/storage';
 import { requestNotificationPermission, getNotificationPermission, toggleNotifications, updateReminderSettings } from '../services/notifications';
 import type { Settings } from '../types';
 
+const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
+
 interface SettingsPageProps {
   onExport: () => void;
   onImport: () => void;
@@ -15,13 +17,8 @@ interface SettingsPageProps {
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function SettingsPage({ onExport, onImport, onReset, onSettingsChange }: SettingsPageProps) {
-  const spring = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
   const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [permissionState, setPermissionState] = useState(() => getNotificationPermission());
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   const handleToggleNotifications = async () => {
     if (!settings.notifications) {
@@ -58,7 +55,7 @@ export default function SettingsPage({ onExport, onImport, onReset, onSettingsCh
       className="max-w-[640px]"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={spring}
+      transition={SPRING}
     >
       <h1 className="font-heading text-2xl font-bold text-text mb-6">Settings</h1>
 
@@ -71,7 +68,7 @@ export default function SettingsPage({ onExport, onImport, onReset, onSettingsCh
       <section className="bg-surface rounded-[var(--radius-md)] border border-border p-5 mb-4">
         <div className="flex items-center justify-between mb-1">
           <h2 className="font-heading text-sm font-semibold text-text">Notifications & Reminders</h2>
-          <button
+          <button type="button"
             className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer border-none ${settings.notifications ? 'bg-primary' : 'bg-border'}`}
             onClick={handleToggleNotifications}
             aria-label={settings.notifications ? 'Disable notifications' : 'Enable notifications'}
@@ -100,12 +97,12 @@ export default function SettingsPage({ onExport, onImport, onReset, onSettingsCh
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text">Reminder Days</label>
+              <span className="text-sm font-medium text-text">Reminder Days</span>
               <div className="flex gap-1.5">
                 {DAY_NAMES.map((day, i) => {
                   const isActive = (settings.reminderDays || []).includes(i);
                   return (
-                    <button
+                    <button type="button"
                       key={day}
                       className={`w-9 h-9 rounded-[var(--radius-sm)] text-xs font-semibold border cursor-pointer transition-all duration-150 ${isActive ? 'bg-primary text-white border-primary' : 'bg-transparent text-text-secondary border-border hover:bg-hover-bg'}`}
                       onClick={() => handleDayToggle(i)}
@@ -131,8 +128,8 @@ export default function SettingsPage({ onExport, onImport, onReset, onSettingsCh
         <h2 className="font-heading text-sm font-semibold text-text mb-1">Data Management</h2>
         <p className="text-sm text-text-muted mb-3">Export your data for backup or import previously saved data.</p>
         <div className="flex gap-3">
-          <button className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150" onClick={onExport}>Export Data</button>
-          <button className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] border border-border bg-background text-text cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onImport}>Import Data</button>
+          <button type="button" className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150" onClick={onExport}>Export Data</button>
+          <button type="button" className="font-heading text-sm font-semibold py-2 px-5 rounded-[var(--radius-md)] border border-border bg-background text-text cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onImport}>Import Data</button>
         </div>
       </section>
     </m.div>

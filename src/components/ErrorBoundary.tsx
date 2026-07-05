@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className="error-boundary">
           <h2>Something went wrong</h2>
           <p>{this.state.error?.message}</p>
-          <button onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}>
+          <button type="button" onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}>
             Reload App
           </button>
         </div>

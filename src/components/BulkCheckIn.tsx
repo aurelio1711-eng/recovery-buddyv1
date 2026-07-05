@@ -10,6 +10,15 @@ interface BulkCheckInProps {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const CATEGORY_LABELS: Record<string, string> = {
+  orientation: 'Orientation',
+  clinical: 'Clinical',
+  mandatory: 'Mandatory',
+  after30: 'After 30 Days',
+  support: 'Support',
+  other: 'Other',
+};
+
 export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInProps) {
   const [selectedDate, setSelectedDate] = useState(() => getToday());
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
@@ -82,15 +91,6 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
     return acc;
   }, {});
 
-  const categoryLabels: Record<string, string> = {
-    orientation: 'Orientation',
-    clinical: 'Clinical',
-    mandatory: 'Mandatory',
-    after30: 'After 30 Days',
-    support: 'Support',
-    other: 'Other',
-  };
-
   const handleSubmit = () => {
     if (selectedGroups.size === 0) return;
     const selections = Array.from(selectedGroups).map(groupId => ({
@@ -109,6 +109,7 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
       aria-modal="true"
       aria-labelledby="bulk-checkin-title"
       onClick={handleOverlayClick}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       onTouchStart={handleTouchStart}
     >
       <div
@@ -118,7 +119,7 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 id="bulk-checkin-title" className="font-heading text-base font-semibold text-text">Bulk Check-In</h2>
-          <button className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
+          <button type="button" className="bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={onClose} aria-label="Close">&times;</button>
         </div>
 
         <div className="px-5 py-4 flex flex-col gap-4">
@@ -136,7 +137,7 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-text">Groups ({selectedGroups.size} selected)</label>
-              <button
+              <button type="button"
                 className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark"
                 onClick={toggleAll}
               >
@@ -148,10 +149,10 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
               {Object.entries(groupedByCategory).map(([cat, catGroups]) => (
                 <div key={cat}>
                   <div className="px-3 py-1.5 bg-hover-bg text-xs font-semibold text-text-secondary border-b border-border">
-                    {categoryLabels[cat] || cat}
+                    {CATEGORY_LABELS[cat] || cat}
                   </div>
                   {catGroups.map(g => (
-                    <button
+                    <button type="button"
                       key={g.id}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left bg-transparent border-none border-b border-border cursor-pointer transition-colors duration-100 hover:bg-hover-bg ${selectedGroups.has(g.id) ? 'bg-primary/5' : ''}`}
                       onClick={() => toggleGroup(g.id)}
@@ -188,8 +189,8 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
         </div>
 
         <div className="flex justify-end gap-3 px-5 py-4 border-t border-border">
-          <button className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onClose}>Cancel</button>
-          <button
+          <button type="button" className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onClose}>Cancel</button>
+          <button type="button"
             className="text-sm font-semibold py-2 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSubmit}
             disabled={selectedGroups.size === 0}

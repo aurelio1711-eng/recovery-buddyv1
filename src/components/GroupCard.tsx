@@ -39,21 +39,12 @@ const GroupCard = memo(function GroupCard({ group, onCheckIn, onCheckOut, canChe
 
         {!isRecurring && group.required > 0 && (
         <div className="mb-3">
-          <div
-            className="h-2 bg-border rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
+          <progress
+            className="h-2 bg-border rounded-full overflow-hidden appearance-none [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-border [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
+            value={progress}
+            max={100}
             aria-label={`${group.name}: ${group.completed} of ${group.required} sessions (${progress}%)`}
-          >
-            <m.div
-              className="h-full rounded-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut', delay: index * 0.05 }}
-            />
-          </div>
+          />
           <m.span
             className="text-xs mt-1.5 block tabular-nums"
             key={group.completed}
@@ -81,7 +72,7 @@ const GroupCard = memo(function GroupCard({ group, onCheckIn, onCheckOut, canChe
       )}
 
       <div className="flex gap-2">
-        <button
+        <button type="button"
           className={`text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border-none cursor-pointer transition-colors duration-150 ${isComplete ? 'bg-success-light text-success-dark' : 'bg-primary text-white hover:bg-primary-dark'}`}
           onClick={onCheckIn}
           disabled={!canCheckIn && !isRecurring}
@@ -91,7 +82,7 @@ const GroupCard = memo(function GroupCard({ group, onCheckIn, onCheckOut, canChe
           {isRecurring ? 'Attend Session' : isComplete ? 'Completed' : 'Check In'}
         </button>
         {(group.completed > 0 || isRecurring) && (
-          <button className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onCheckOut}>
+          <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] bg-transparent border border-border text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150" onClick={onCheckOut}>
             Undo
           </button>
         )}

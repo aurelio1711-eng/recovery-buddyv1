@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { m } from 'motion/react';
 import { loadSettings, getDaysSinceProgramStart, getDaysUntilNextPass, getNextPassDate, isEligibleForPass, updatePassStatus } from '../services/storage';
 import { getToday } from '../services/nycTime';
@@ -8,38 +8,37 @@ interface Props {
   refreshKey?: number;
 }
 
-export default function PassCountdown({ refreshKey = 0 }: Props) {
-  const [daysSinceStart, setDaysSinceStart] = useState<number>(0);
-  const [daysUntilNextPass, setDaysUntilNextPass] = useState<number>(0);
-  const [nextPassDate, setNextPassDate] = useState<string | null>(null);
-  const [eligible, setEligible] = useState<boolean>(false);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [justClaimed, setJustClaimed] = useState<boolean>(false);
-
-  const refreshPassStatus = () => {
-    const newDaysSinceStart = getDaysSinceProgramStart();
-    const newDaysUntilPass = getDaysUntilNextPass();
-    const newNextPassDate = getNextPassDate();
-    const isEligible = isEligibleForPass();
-    const storedSettings = loadSettings();
-
-    setDaysSinceStart(newDaysSinceStart);
-    setDaysUntilNextPass(newDaysUntilPass);
-    setNextPassDate(newNextPassDate);
-    setEligible(isEligible);
-    setSettings(storedSettings);
+function computePassState() {
+  return {
+    daysSinceStart: getDaysSinceProgramStart(),
+    daysUntilNextPass: getDaysUntilNextPass(),
+    nextPassDate: getNextPassDate(),
+    eligible: isEligibleForPass(),
+    settings: loadSettings(),
   };
+}
+
+export default function PassCountdown({ refreshKey = 0 }: Props) {
+  const [passState, setPassState] = useState(computePassState);
+  const [justClaimed, setJustClaimed] = useState<boolean>(false);
+  const prevRefreshKey = useRef(refreshKey);
+
+  if (refreshKey !== prevRefreshKey.current) {
+    prevRefreshKey.current = refreshKey;
+    setPassState(computePassState());
+  }
+
+  const { daysSinceStart, daysUntilNextPass, nextPassDate, eligible, settings } = passState;
 
   useEffect(() => {
-    refreshPassStatus();
-    const interval = setInterval(refreshPassStatus, 86400000);
+    const interval = setInterval(() => setPassState(computePassState()), 86400000);
     return () => clearInterval(interval);
-  }, [refreshKey]);
+  }, []);
 
   const handleClaimPass = () => {
     updatePassStatus(getToday());
     setJustClaimed(true);
-    refreshPassStatus();
+    setPassState(computePassState());
   };
 
   const getStatusColor = (): string => {
@@ -101,22 +100,12 @@ export default function PassCountdown({ refreshKey = 0 }: Props) {
         </div>
 
         <div className="flex-1 w-full">
-          <div
-            className="h-2.5 bg-border rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={Math.round(getProgressValue())}
-            aria-valuemin={0}
-            aria-valuemax={100}
+          <progress
+            className="h-2.5 bg-border rounded-full overflow-hidden appearance-none [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-border [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-primary"
+            value={Math.round(getProgressValue())}
+            max={100}
             aria-label={getProgressLabel()}
-          >
-            <div
-              className="h-full rounded-full transition-[width] duration-500 ease-out"
-              style={{
-                width: `${Math.min(100, getProgressValue())}%`,
-                backgroundColor: getStatusColor()
-              }}
-            />
-          </div>
+          />
           <span className="block text-xs text-text-muted mt-1.5">
             {getProgressLabel()}
           </span>
@@ -143,12 +132,12 @@ export default function PassCountdown({ refreshKey = 0 }: Props) {
       </div>
 
       {eligible && daysUntilNextPass === 0 && !justClaimed && (
-        <button className="mt-4 w-full font-heading text-sm font-semibold py-2.5 px-6 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2" onClick={handleClaimPass}>
+        <button type="button" className="mt-4 w-full font-heading text-sm font-semibold py-2.5 px-6 rounded-[var(--radius-md)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2" onClick={handleClaimPass}>
           Claim Weekend Pass
         </button>
       )}
       {justClaimed && (
-        <button className="mt-4 w-full font-heading text-sm font-semibold py-2.5 px-6 rounded-[var(--radius-md)] bg-primary-light text-text-muted border-none cursor-not-allowed opacity-60" disabled>
+        <button type="button" className="mt-4 w-full font-heading text-sm font-semibold py-2.5 px-6 rounded-[var(--radius-md)] bg-primary-light text-text-muted border-none cursor-not-allowed opacity-60" disabled>
           Pass Claimed for Today
         </button>
       )}
