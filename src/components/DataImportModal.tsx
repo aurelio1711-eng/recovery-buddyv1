@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getHasCloudData, pushToCloud, pullFromCloud, clearLocalAndPullFromCloud } from '../services/storageProvider';
+import { getHasCloudData, pushToCloud, pullFromCloud } from '../services/storageProvider';
 
 interface DataImportModalProps {
   onClose: () => void;
@@ -57,9 +57,9 @@ export default function DataImportModal({ onClose, onComplete }: DataImportModal
   const handlePull = async () => {
     if (!user) return;
     setStep('syncing');
-    setMessage('Downloading your cloud data...');
+    setMessage('Merging cloud data with this device...');
     try {
-      await clearLocalAndPullFromCloud(user.id);
+      await pullFromCloud(user.id);
       setStep('done');
       onComplete();
     } catch {
@@ -96,7 +96,7 @@ export default function DataImportModal({ onClose, onComplete }: DataImportModal
                   className="w-full text-sm font-semibold py-2.5 px-4 rounded-[var(--radius-sm)] bg-primary text-white cursor-pointer border-none hover:bg-primary-dark transition-colors duration-150 touch-target"
                   onClick={handlePush}
                 >
-                  Upload local data to cloud
+                  Merge local data into cloud
                 </button>
               )}
               {hasCloud && (
@@ -105,7 +105,7 @@ export default function DataImportModal({ onClose, onComplete }: DataImportModal
                   className="w-full text-sm font-semibold py-2.5 px-4 rounded-[var(--radius-sm)] border border-border bg-background text-text cursor-pointer hover:bg-hover-bg transition-colors duration-150 touch-target"
                   onClick={handlePull}
                 >
-                  Download cloud data to this device
+                  Merge cloud data with this device
                 </button>
               )}
               <button

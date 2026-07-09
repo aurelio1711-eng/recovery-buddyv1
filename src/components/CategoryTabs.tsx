@@ -14,8 +14,9 @@ const CategoryTabs = memo(function CategoryTabs({ categories, activeCategory, on
   return (
     <div className="flex flex-wrap gap-1.5 pb-1">
       {categories.map(cat => {
-        const count = groups.filter(g => g.category === cat.id).length;
-        const completed = groups.filter(g => g.category === cat.id && g.completed > 0).length;
+        const catGroups = groups.filter(g => g.category === cat.id);
+        const count = catGroups.length;
+        const completed = catGroups.filter(g => !g.recurring && g.required !== 999 && g.completed >= g.required).length;
         const isActive = activeCategory === cat.id;
         return (
           <m.button type="button"

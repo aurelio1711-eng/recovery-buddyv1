@@ -123,28 +123,66 @@ export async function pullFromCloud(userId: string): Promise<void> {
     cloud.loadSettings(userId),
   ]);
 
-  if (cloudGroups) local.saveProgram(cloudGroups);
-  if (cloudCheckIns && Object.keys(cloudCheckIns).length > 0) local.saveCheckIns(cloudCheckIns);
-  if (cloudSettings) local.saveSettings(cloudSettings);
+  if (cloudGroups) local.mergeProgram(cloudGroups);
+  if (cloudCheckIns && Object.keys(cloudCheckIns).length > 0) local.mergeCheckIns(cloudCheckIns);
+  if (cloudSettings) local.mergeSettings(cloudSettings);
 }
 
 export async function pushToCloud(userId: string): Promise<void> {
-  const prog = local.loadProgram();
-  const checks = local.loadCheckIns();
-  const settings = local.loadSettings();
+  const [cloudGroups, cloudCheckIns, cloudSettings] = await Promise.all([
+    cloud.loadProgram(userId),
+    cloud.loadCheckIns(userId),
+    cloud.loadSettings(userId),
+  ]);
 
-  const promises: Promise<unknown>[] = [];
+  const localProg = local.loadProgram();
+  const localChecks = local.loadCheckIns();
+  const localSettings = local.loadSettings();
 
-  if (prog) promises.push(cloud.saveProgram(userId, prog));
+  // Merge local into cloud data first
+  const mergedProg = cloudGroups ? [...cloudGroups] : [];
+  if (localProg) {
+    const map = new Map<string, Group>();
+    for (const g of mergedProg) map.set(g.id, g);
+    for (const g of localProg) {
+      const existing = map.get(g.id);
+      if (existing) {
+        existing.completed = Math.max(existing.completed, g.completed);
+      } else {
+        map.set(g.id, g);
+      }
+    }
+    mergedProg.length = 0;
+    mergedProg.push(...map.values());
+  }
 
-  if (checks) {
-    for (const [, checkIn] of Object.entries(checks)) {
-      const exists = cloud.addCheckIn(userId, checkIn.groupId, checkIn.date, checkIn.notes, checkIn.timestamp, checkIn.signature);
-      promises.push(exists);
+  const mergedCheckIns = cloudCheckIns ? { ...cloudCheckIns } : {};
+  if (localChecks) {
+    for (const [key, ci] of Object.entries(localChecks)) {
+      if (!mergedCheckIns[key] || (ci.timestamp || 0) > (mergedCheckIns[key].timestamp || 0)) {
+        mergedCheckIns[key] = ci;
+      }
     }
   }
 
-  if (settings) promises.push(cloud.saveSettings(userId, settings));
+  const mergedSettings = cloudSettings || localSettings || undefined;
+
+  const promises: Promise<unknown>[] = [];
+
+  if (mergedProg.length > 0) promises.push(cloud.saveProgram(userId, mergedProg));
+  if (mergedCheckIns) {
+    const allCheckInKeys = [...new Set([
+      ...Object.keys(cloudCheckIns || {}),
+      ...Object.keys(localChecks || {}),
+    ])];
+    for (const key of allCheckInKeys) {
+      const ci = mergedCheckIns[key];
+      if (ci) {
+        promises.push(cloud.addCheckIn(userId, ci.groupId, ci.date, ci.notes, ci.timestamp, ci.signature));
+      }
+    }
+  }
+  if (mergedSettings) promises.push(cloud.saveSettings(userId, mergedSettings));
 
   await Promise.allSettled(promises);
 }
@@ -158,7 +196,4 @@ export async function getHasCloudData(userId: string): Promise<boolean> {
   return !!(groups?.length || (checkIns && Object.keys(checkIns).length > 0) || settings);
 }
 
-export async function clearLocalAndPullFromCloud(userId: string): Promise<void> {
-  local.clearAllData();
-  await pullFromCloud(userId);
-}
+

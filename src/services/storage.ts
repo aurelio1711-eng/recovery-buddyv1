@@ -282,6 +282,46 @@ export const validateImportData = (data: unknown): ImportValidation => {
   return { valid: errors.length === 0, errors };
 };
 
+export function mergeProgram(imported: Group[]): void {
+  const existing = loadProgram() || [];
+  const map = new Map<string, Group>();
+  for (const g of existing) map.set(g.id, g);
+  for (const g of imported) {
+    const existing_g = map.get(g.id);
+    if (existing_g) {
+      existing_g.completed = Math.max(existing_g.completed, g.completed);
+      if (g.note) existing_g.note = g.note;
+      if (g.time) existing_g.time = g.time;
+      if (g.name) existing_g.name = g.name;
+    } else {
+      map.set(g.id, { ...g });
+    }
+  }
+  saveProgram(Array.from(map.values()));
+}
+
+export function mergeCheckIns(imported: CheckInsRecord): void {
+  const existing = loadCheckIns();
+  for (const [key, ci] of Object.entries(imported)) {
+    if (!existing[key] || (ci.timestamp || 0) > (existing[key].timestamp || 0)) {
+      existing[key] = ci;
+    }
+  }
+  saveCheckIns(existing);
+}
+
+export function mergeSettings(imported: Settings): void {
+  const existing = loadSettings();
+  existing.startDate = existing.startDate < imported.startDate ? existing.startDate : imported.startDate;
+  existing.programStartDate = existing.programStartDate < imported.programStartDate ? existing.programStartDate : imported.programStartDate;
+  const mergedPassHistory = [...new Set([...existing.passHistory, ...imported.passHistory])];
+  existing.passHistory = mergedPassHistory;
+  if (imported.lastPassDate && (!existing.lastPassDate || imported.lastPassDate > existing.lastPassDate)) {
+    existing.lastPassDate = imported.lastPassDate;
+  }
+  saveSettings(existing);
+}
+
 export const importData = (data: unknown): ImportValidation => {
   const validation = validateImportData(data);
   if (!validation.valid) {
@@ -291,9 +331,9 @@ export const importData = (data: unknown): ImportValidation => {
 
   if (data && typeof data === 'object') {
     const d = data as Record<string, unknown>;
-    if (d.program) saveProgram(d.program as Group[]);
-    if (d.checkIns) saveCheckIns(d.checkIns as CheckInsRecord);
-    if (d.settings) saveSettings(d.settings as Settings);
+    if (d.program) mergeProgram(d.program as Group[]);
+    if (d.checkIns) mergeCheckIns(d.checkIns as CheckInsRecord);
+    if (d.settings) mergeSettings(d.settings as Settings);
   }
 
   return validation;

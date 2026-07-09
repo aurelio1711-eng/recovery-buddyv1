@@ -290,7 +290,9 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const totalRequired = useMemo(() => groups
     .filter(g => g.required !== 999)
     .reduce((sum, g) => sum + (g.required || 0), 0), [groups]);
-  const totalCompleted = useMemo(() => groups.reduce((sum, g) => sum + (g.completed || 0), 0), [groups]);
+  const totalCompleted = useMemo(() => groups
+    .filter(g => g.required !== 999)
+    .reduce((sum, g) => sum + (g.completed || 0), 0), [groups]);
   const overallProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
   const isMobile = useMediaQuery('(max-width: 768px)');

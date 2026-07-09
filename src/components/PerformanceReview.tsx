@@ -6,7 +6,7 @@ import { CATEGORIES } from '../data/categories';
 import { getToday } from '../services/nycTime';
 import type { Group, CheckIn, CategoryAnalytics, Settings } from '../types';
 
-const SPRING = { type: 'SPRING' as const, stiffness: 150, damping: 18, mass: 0.8 };
+const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
 
 function ReviewIcon() {
   return (
