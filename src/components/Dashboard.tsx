@@ -21,6 +21,7 @@ import BulkCheckIn from './BulkCheckIn';
 import PrintableReport from './PrintableReport';
 import AccountMenu from './AccountMenu';
 import DataImportModal from './DataImportModal';
+import OnboardingModal from './OnboardingModal';
 
 const SPRING = { type: 'spring' as const, stiffness: 150, damping: 18, mass: 0.8 };
 const SPRING_SNAP = { type: 'spring' as const, stiffness: 300, damping: 22 };
@@ -46,7 +47,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>(() => getCheckInsForDate());
   const [refreshKey, setRefreshKey] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [showWelcome, setShowWelcome] = useState(() => !loadProgram());
+  const [showOnboarding, setShowOnboarding] = useState(() => !loadProgram());
   const [showSearch, setShowSearch] = useState(false);
   const [showBulkCheckIn, setShowBulkCheckIn] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
@@ -371,12 +372,8 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
           transition={{ duration: 0.3 }}
         >
           <div className="max-w-5xl mx-auto px-6 py-8 max-lg:px-4 max-lg:py-4">
-            {showWelcome && (
-              <m.div className="relative bg-primary-light border border-primary rounded-[var(--radius-md)] p-4 mb-6 pr-10" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
-                <h2 className="font-heading text-sm font-bold text-primary-dark mb-1">Welcome to Recovery Buddy</h2>
-                <p className="text-xs text-text-secondary leading-relaxed">Track your clinical and non-clinical group attendance. Check in to groups each session, earn certificates upon completion, and track your 30-day weekend pass eligibility.</p>
-                <button type="button" className="absolute top-2 right-3 bg-transparent border-none text-lg text-primary cursor-pointer leading-none p-0 hover:text-primary-dark" onClick={() => setShowWelcome(false)} aria-label="Dismiss">&times;</button>
-              </m.div>
+            {showOnboarding && (
+              <OnboardingModal onComplete={() => { setShowOnboarding(false); loadTodayCheckIns(); setRefreshKey(k => k + 1); }} />
             )}
 
             <AnimatePresence mode="wait">
