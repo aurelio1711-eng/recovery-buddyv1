@@ -26,16 +26,21 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
 
   const eligibleGroups = groups.filter(g => g.recurring || g.completed < g.required);
 
   const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  }, [onClose]);
+    if (e.target === e.currentTarget) closeRef.current();
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) onClose();
-  }, [onClose]);
+    if (e.target === e.currentTarget) closeRef.current();
+  }, []);
+
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -48,7 +53,7 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
 
     const trap = (e: Event) => {
       const ke = e as KeyboardEvent;
-      if (ke.key === 'Escape') { onClose(); return; }
+      if (ke.key === 'Escape') { closeRef.current(); return; }
       if (ke.key !== 'Tab') return;
       if (ke.shiftKey && document.activeElement === first) {
         ke.preventDefault();
@@ -61,11 +66,12 @@ export default function BulkCheckIn({ groups, onSubmit, onClose }: BulkCheckInPr
     overlay.addEventListener('keydown', trap);
     return () => {
       overlay.removeEventListener('keydown', trap);
-      if (lastFocused.current && document.body.contains(lastFocused.current)) {
+      const focused = document.activeElement;
+      if (lastFocused.current && document.body.contains(lastFocused.current) && overlay.contains(focused)) {
         lastFocused.current.focus();
       }
     };
-  }, [onClose]);
+  }, []);
 
   const toggleGroup = (groupId: string) => {
     setSelectedGroups(prev => {

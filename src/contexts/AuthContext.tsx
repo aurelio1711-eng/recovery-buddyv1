@@ -5,6 +5,14 @@ import { setSyncEnabled } from '../services/storageProvider';
 
 type AuthProvider = 'google' | 'email';
 
+const SESSION_CACHE_KEY = 'rb-auth-cache';
+
+interface SessionCache {
+  userId: string;
+  email?: string;
+  timestamp: number;
+}
+
 interface AuthContextValue {
   user: User | null;
   session: Session | null;
@@ -19,6 +27,26 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function tryGetSupabase() {
   try { return getSupabase(); } catch { return null; }
+}
+
+export function getSessionCache(): SessionCache | null {
+  try {
+    const raw = localStorage.getItem(SESSION_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionCache(user: User): void {
+  try {
+    const cache: SessionCache = { userId: user.id, email: user.email, timestamp: Date.now() };
+    localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(cache));
+  } catch { /* ignore */ }
+}
+
+function clearSessionCache(): void {
+  try { localStorage.removeItem(SESSION_CACHE_KEY); } catch { /* ignore */ }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,13 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setSessionCache(session.user);
+      else clearSessionCache();
       setSession(session);
       setUser(session?.user ?? null);
       setSyncEnabled(!!session?.user, session?.user?.id ?? null);
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) setSessionCache(session.user);
+      else if (event === 'SIGNED_OUT') clearSessionCache();
       setSession(session);
       setUser(session?.user ?? null);
       setSyncEnabled(!!session?.user, session?.user?.id ?? null);
@@ -86,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const sb = tryGetSupabase();
     if (sb) await sb.auth.signOut();
+    clearSessionCache();
     setUser(null);
     setSession(null);
     setSyncEnabled(false, null);

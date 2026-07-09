@@ -19,18 +19,23 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const lastFocused = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
 
   const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      closeRef.current();
     }
-  }, [onClose]);
+  }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      closeRef.current();
     }
-  }, [onClose]);
+  }, []);
+
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -43,7 +48,7 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
 
     const trap = (e: Event) => {
       const ke = e as KeyboardEvent;
-      if (ke.key === 'Escape') { onClose(); return; }
+      if (ke.key === 'Escape') { closeRef.current(); return; }
       if (ke.key !== 'Tab') return;
       if (ke.shiftKey && document.activeElement === first) {
         ke.preventDefault();
@@ -56,11 +61,12 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
     overlay.addEventListener('keydown', trap);
     return () => {
       overlay.removeEventListener('keydown', trap);
-      if (lastFocused.current && document.body.contains(lastFocused.current)) {
+      const focused = document.activeElement;
+      if (lastFocused.current && document.body.contains(lastFocused.current) && overlay.contains(focused)) {
         lastFocused.current.focus();
       }
     };
-  }, [onClose]);
+  }, []);
 
   if (showSignaturePad) {
     return (
