@@ -6,7 +6,6 @@ import { flushSyncQueue, hasPendingSync, getQueueLength } from '../services/sync
 import { initNycTime, getNycTimestamp, getLocalTimestamp, getToday } from '../services/nycTime';
 import { initializeNotifications } from '../services/notifications';
 import { useAuth } from '../contexts/AuthContext';
-import useMediaQuery from '../hooks/useMediaQuery';
 import type { Group, CheckIn, Toast, Page } from '../types';
 import DailyCheckIn from './DailyCheckIn';
 import ProgressOverview from './ProgressOverview';
@@ -16,7 +15,6 @@ import NavMenu from './NavMenu';
 import GroupsPage from './GroupsPage';
 import SettingsPage from './SettingsPage';
 import PerformanceReview from './PerformanceReview';
-import MobileLayout from './MobileLayout';
 import CalendarView from './CalendarView';
 import SearchModal from './SearchModal';
 import BulkCheckIn from './BulkCheckIn';
@@ -54,6 +52,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [showPrintReport, setShowPrintReport] = useState(false);
   const [showDataImport, setShowDataImport] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [menuOpen, setMenuOpen] = useState(false);
   const toastTimeouts = useRef<Map<string, number>>(new Map<string, number>());
 
   useEffect(() => {
@@ -63,7 +62,6 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     };
   }, []);
 
-  // ── Online / offline detection ──
   useEffect(() => {
     const handleOnline = () => { setIsOnline(true); flushSyncQueue(); };
     const handleOffline = () => setIsOnline(false);
@@ -75,7 +73,6 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     };
   }, []);
 
-  // ── Show data import on first authed load if local data exists ──
   useEffect(() => {
     if (user) {
       const localProg = localStorage.getItem('clinical-program-tracker');
@@ -174,7 +171,6 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     a.href = url;
     a.download = `recovery-tracker-export-${getToday()}.json`;
     a.click();
-    // Revoke after a short delay to ensure download has been initiated in all browsers
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     addToast('Data exported successfully');
   };
@@ -299,8 +295,6 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     .reduce((sum, g) => sum + (g.completed || 0), 0), [groups]);
   const overallProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
 
-  const isMobile = useMediaQuery('(max-width: 768px)');
-
   const syncIndicator = (
     <div className="flex items-center gap-1.5">
       {user && (
@@ -324,212 +318,176 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     </div>
   );
 
-  const sharedProps = {
-    groups,
-    activeCategory,
-    onCategoryChange: setActiveCategory,
-    onGroupCheckIn: (group: Group) => { setSelectedGroup(group); setShowCheckInModal(true); },
-    onGroupCheckOut: handleCheckOut,
-    canGroupCheckIn: (group: Group) => group.recurring || group.completed < group.required,
-    onGroupAdd: handleGroupAdd,
-    refreshKey,
-    nycTimeReady,
-    nycTime,
-    localTime,
-    overallProgress,
-    totalCompleted,
-    totalRequired,
-    todayCheckIns,
-    onReset: handleReset,
-    onSettingsChange: handleSettingsChange,
-    filteredGroups: groups.filter(g => g.category === activeCategory),
-    onExport: handleExport,
-    onImport: handleImport,
-    onUndoCheckIn: handleUndoTodayCheckIn,
-    onSearch: () => setShowSearch(true),
-    onBulkCheckIn: () => setShowBulkCheckIn(true),
-    onPrintReport: () => setShowPrintReport(true),
-  };
-
-  if (isMobile) {
-    const isOnDashboard = page === 'dashboard';
-    return (
-      <m.div className="flex flex-col h-dvh" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
-        <NavMenu groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNavigate={setPage} currentPage={page} darkMode={darkMode} onToggleDark={onToggleDark} />
-        {isOnDashboard ? (
-          <MobileLayout {...sharedProps} />
-        ) : (
-          <>
-            <header className="shrink-0 bg-surface border-b border-border px-4 py-3">
-              <div className="flex items-center justify-between">
-                <h1 className="font-heading text-base font-bold text-text">Recovery Buddy</h1>
-                <div className="flex items-center gap-2">
-                  {syncIndicator}
-                  <AccountMenu onImportComplete={() => { setShowDataImport(false); addToast('Data imported successfully'); }} />
-                  <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => setPage('dashboard')}>Back</button>
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 overflow-y-auto px-4 py-4">
-              <AnimatePresence mode="wait">
-                {page.startsWith('groups-') && (
-                  <GroupsPage key={page} groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onGroupCheckIn={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} onGroupCheckOut={handleCheckOut} canGroupCheckIn={(group: Group) => group.recurring || group.completed < group.required} onGroupAdd={handleGroupAdd} />
-                )}
-                {page === 'review' && (
-                  <PerformanceReview key="review" groups={groups} refreshKey={refreshKey} />
-                )}
-                {page === 'calendar' && (
-                  <CalendarView key="calendar" refreshKey={refreshKey} />
-                )}
-                {page === 'settings' && (
-                  <SettingsPage key="settings" onExport={handleExport} onImport={handleImport} onReset={handleReset} onSettingsChange={handleSettingsChange} />
-                )}
-              </AnimatePresence>
-            </main>
-          </>
-        )}
-        {showCheckInModal && selectedGroup && (
-          <DailyCheckIn group={selectedGroup} onSubmit={handleCheckIn} onClose={() => { setShowCheckInModal(false); setSelectedGroup(null); }} />
-        )}
-        <ToastContainer toasts={toasts} onUndo={(t) => { t.undoHandler?.(); setToasts(prev => prev.filter(x => x.id !== t.id)); }} />
-        {showSearch && (
-          <SearchModal groups={groups} onClose={() => setShowSearch(false)} onGroupSelect={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} />
-        )}
-        {showBulkCheckIn && (
-          <BulkCheckIn groups={groups} onSubmit={handleBulkCheckIn} onClose={() => setShowBulkCheckIn(false)} />
-        )}
-        {showPrintReport && (
-          <PrintableReport groups={groups} refreshKey={refreshKey} onClose={() => setShowPrintReport(false)} />
-        )}
-        {showDataImport && user && (
-          <DataImportModal
-            onClose={() => setShowDataImport(false)}
-            onComplete={() => { setShowDataImport(false); addToast('Data synced to cloud'); }}
-          />
-        )}
-      </m.div>
-    );
-  }
+  const pageTitle = page === 'dashboard' ? 'Dashboard'
+    : page === 'review' ? 'Performance Review'
+    : page === 'calendar' ? 'Calendar'
+    : page === 'settings' ? 'Settings'
+    : page.startsWith('groups-') ? 'Groups'
+    : 'Recovery Buddy';
 
   return (
-    <m.main className="pl-16 max-sm:pl-0" id="main-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-      <NavMenu groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onNavigate={setPage} currentPage={page} darkMode={darkMode} onToggleDark={onToggleDark} />
+    <div className="relative min-h-dvh">
+      <NavMenu
+        groups={groups}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+        onNavigate={setPage}
+        currentPage={page}
+        darkMode={darkMode}
+        onToggleDark={onToggleDark}
+        menuOpen={menuOpen}
+        setMenuOpen={setMenuOpen}
+      />
 
-      <div className="max-w-5xl mx-auto px-6 py-8 max-sm:px-4 max-sm:py-4">
-        {showWelcome && (
-          <m.div className="relative bg-primary-light border border-primary rounded-[var(--radius-md)] p-4 mb-6 pr-10" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
-            <h2 className="font-heading text-sm font-bold text-primary-dark mb-1">Welcome to Recovery Buddy</h2>
-            <p className="text-xs text-text-secondary leading-relaxed">Track your clinical and non-clinical group attendance. Check in to groups each session, earn certificates upon completion, and track your 30-day weekend pass eligibility.</p>
-            <button type="button" className="absolute top-2 right-3 bg-transparent border-none text-lg text-primary cursor-pointer leading-none p-0 hover:text-primary-dark" onClick={() => setShowWelcome(false)} aria-label="Dismiss">&times;</button>
-          </m.div>
-        )}
+      <div className="lg:pl-16 max-lg:pb-[3.25rem]">
+        {/* Mobile header */}
+        <header className="flex lg:hidden items-center justify-between shrink-0 bg-surface border-b border-border px-4 py-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <button type="button"
+              className="flex items-center justify-center w-9 h-9 rounded-[var(--radius-sm)] text-text-secondary hover:bg-hover-bg transition-colors duration-150 cursor-pointer border-none shrink-0 touch-target"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            </button>
+            <h1 className="font-heading text-base font-bold text-text truncate">Recovery Buddy</h1>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-[0.6rem] font-bold text-white px-1.5 py-0.5 rounded ${nycTimeReady ? 'bg-primary' : 'bg-warning'}`}>
+              {nycTimeReady ? 'NYC' : 'Local'}
+            </span>
+            <span className="font-mono text-xs tabular-nums text-text-secondary">{localTime}</span>
+            {syncIndicator}
+            {user && <AccountMenu onImportComplete={() => { setShowDataImport(false); addToast('Data imported successfully'); }} />}
+          </div>
+        </header>
 
-        <AnimatePresence mode="wait">
-          {page === 'dashboard' && (
-            <m.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={SPRING}>
-              <m.header className="flex items-center justify-between mb-6" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.05 }}>
-                <div className="flex items-center gap-4">
-                  <h1 className="font-heading text-2xl font-bold text-text">Recovery Buddy</h1>
-                  <m.div className="relative w-14 h-14" key={overallProgress} initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING_SNAP}>
-                    <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-border)" strokeWidth="3" />
-                      <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeDasharray={`${overallProgress} ${100 - overallProgress}`} strokeLinecap="round" />
-                    </svg>
-                    <m.span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-text tabular-nums" key={overallProgress} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>
-                      {overallProgress}%
-                    </m.span>
-                  </m.div>
-                </div>
-                <div className="flex items-center gap-3 text-right">
-                  <div className="flex items-center gap-1.5">
-                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowSearch(true)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                      Search
-                    </button>
-                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowBulkCheckIn(true)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      Bulk Check-In
-                    </button>
-                    <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowPrintReport(true)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                      Print Report
-                    </button>
-                    {user && <AccountMenu onImportComplete={() => { setShowDataImport(false); addToast('Data imported successfully'); }} />}
+        <m.main
+          className="max-lg:min-h-[calc(100dvh-3.25rem)]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="max-w-5xl mx-auto px-6 py-8 max-lg:px-4 max-lg:py-4">
+            {showWelcome && (
+              <m.div className="relative bg-primary-light border border-primary rounded-[var(--radius-md)] p-4 mb-6 pr-10" initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={SPRING}>
+                <h2 className="font-heading text-sm font-bold text-primary-dark mb-1">Welcome to Recovery Buddy</h2>
+                <p className="text-xs text-text-secondary leading-relaxed">Track your clinical and non-clinical group attendance. Check in to groups each session, earn certificates upon completion, and track your 30-day weekend pass eligibility.</p>
+                <button type="button" className="absolute top-2 right-3 bg-transparent border-none text-lg text-primary cursor-pointer leading-none p-0 hover:text-primary-dark" onClick={() => setShowWelcome(false)} aria-label="Dismiss">&times;</button>
+              </m.div>
+            )}
+
+            <AnimatePresence mode="wait">
+              {page === 'dashboard' && (
+                <m.div key="dashboard" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={SPRING}>
+                  {/* Dashboard header */}
+                  <m.header className="flex flex-wrap items-center gap-3 mb-6 max-lg:gap-2" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SPRING, delay: 0.05 }}>
+                    <div className="flex items-center gap-4 max-lg:gap-3">
+                      <h1 className="font-heading text-2xl font-bold text-text max-lg:text-lg">Recovery Buddy</h1>
+                      <m.div className="relative w-14 h-14 max-lg:w-11 max-lg:h-11" key={overallProgress} initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={SPRING_SNAP}>
+                        <svg className="w-14 h-14 max-lg:w-11 max-lg:h-11 -rotate-90" viewBox="0 0 36 36">
+                          <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-border)" strokeWidth="3" />
+                          <circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--color-primary)" strokeWidth="3" strokeDasharray={`${overallProgress} ${100 - overallProgress}`} strokeLinecap="round" />
+                        </svg>
+                        <m.span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-text tabular-nums max-lg:text-[0.6rem]" key={overallProgress} initial={{ y: 8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={SPRING}>
+                          {overallProgress}%
+                        </m.span>
+                      </m.div>
+                    </div>
+                    <div className="flex items-center gap-3 ml-auto max-lg:flex-wrap max-lg:w-full max-lg:justify-between max-lg:gap-1.5">
+                      <div className="flex items-center gap-1.5 max-lg:order-2 max-lg:w-full">
+                        <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowSearch(true)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                          <span className="max-lg:hidden">Search</span>
+                        </button>
+                        <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowBulkCheckIn(true)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          <span className="max-lg:hidden">Bulk Check-In</span>
+                        </button>
+                        <button type="button" className="text-xs font-semibold py-1.5 px-3 rounded-[var(--radius-sm)] border border-border bg-background text-text-secondary cursor-pointer hover:bg-hover-bg transition-colors duration-150 flex items-center gap-1.5" onClick={() => setShowPrintReport(true)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          <span className="max-lg:hidden">Print Report</span>
+                        </button>
+                        {user && <span className="max-lg:hidden"><AccountMenu onImportComplete={() => { setShowDataImport(false); addToast('Data imported successfully'); }} /></span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 max-lg:hidden">
+                        <span className={`text-[0.6rem] font-bold text-white px-1.5 py-0.5 rounded ${nycTimeReady ? 'bg-primary' : 'bg-warning'}`}>{nycTimeReady ? 'NYC' : 'Local'}</span>
+                        <span className="text-xs font-mono tabular-nums text-text-secondary">{localTime}</span>
+                        <span className="text-xs font-mono tabular-nums text-text-muted">{nycTime}</span>
+                        {syncIndicator}
+                      </div>
+                      <p className="text-xs text-text-muted tabular-nums max-lg:w-full max-lg:text-center">{totalCompleted} of {totalRequired} required sessions completed</p>
+                    </div>
+                  </m.header>
+
+                  <div className="flex flex-col gap-6">
+                    <PassCountdown refreshKey={refreshKey} />
+                    <ProgressOverview groups={groups} />
+
+                    {todayCheckIns.length > 0 ? (
+                      <section>
+                        <h2 className="font-heading text-base font-semibold text-text mb-3">Today&apos;s Check-Ins</h2>
+                        <ul className="flex flex-col gap-2">
+                          {todayCheckIns.map(ci => (
+                            <m.li key={`${ci.groupId}-${ci.date}`} className="flex items-center gap-3 bg-surface rounded-[var(--radius-md)] border border-border p-3 max-lg:gap-2 max-lg:p-2.5" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}>
+                              <span className="flex-1 font-medium text-sm text-text capitalize max-lg:text-xs">{ci.groupId.replace(/-/g, ' ')}</span>
+                              <span className="text-xs tabular-nums text-text-muted">{new Date(ci.timestamp).toLocaleTimeString()}</span>
+                              {ci.notes && <span className="text-xs text-text-muted truncate max-w-[180px] max-lg:max-w-[100px]">— {ci.notes}</span>}
+                              <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
+                            </m.li>
+                          ))}
+                        </ul>
+                      </section>
+                    ) : (
+                      <div className="text-sm text-text-muted text-center py-8">No check-ins recorded for today</div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[0.6rem] font-bold text-white px-1.5 py-0.5 rounded ${nycTimeReady ? 'bg-primary' : 'bg-warning'}`}>{nycTimeReady ? 'NYC' : 'Local'}</span>
-                    <span className="text-xs font-mono tabular-nums text-text-secondary">{localTime}</span>
-                    <span className="text-xs font-mono tabular-nums text-text-muted">{nycTime}</span>
-                    {syncIndicator}
-                  </div>
-                  <p className="text-xs text-text-muted tabular-nums">{totalCompleted} of {totalRequired} required sessions completed</p>
-                </div>
-              </m.header>
+                </m.div>
+              )}
 
-              <div className="flex flex-col gap-6">
-                <PassCountdown refreshKey={refreshKey} />
-                <ProgressOverview groups={groups} />
+              {page.startsWith('groups-') && (
+                <GroupsPage key={page} groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onGroupCheckIn={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} onGroupCheckOut={handleCheckOut} canGroupCheckIn={(group: Group) => group.recurring || group.completed < group.required} onGroupAdd={handleGroupAdd} />
+              )}
 
-                {todayCheckIns.length > 0 ? (
-                  <section>
-                    <h2 className="font-heading text-base font-semibold text-text mb-3">Today&apos;s Check-Ins</h2>
-                    <ul className="flex flex-col gap-2">
-                      {todayCheckIns.map(ci => (
-                        <m.li key={`${ci.groupId}-${ci.date}`} className="flex items-center gap-3 bg-surface rounded-[var(--radius-md)] border border-border p-3" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}>
-                          <span className="flex-1 font-medium text-sm text-text capitalize">{ci.groupId.replace(/-/g, ' ')}</span>
-                          <span className="text-xs tabular-nums text-text-muted">{new Date(ci.timestamp).toLocaleTimeString()}</span>
-                          {ci.notes && <span className="text-xs text-text-muted truncate max-w-[180px]">— {ci.notes}</span>}
-                          <button type="button" className="text-xs font-semibold text-primary bg-transparent border-none cursor-pointer hover:text-primary-dark" onClick={() => handleUndoTodayCheckIn(ci.groupId, ci.date)}>Undo</button>
-                        </m.li>
-                      ))}
-                    </ul>
-                  </section>
-                ) : (
-                  <div className="text-sm text-text-muted text-center py-8">No check-ins recorded for today</div>
-                )}
-              </div>
-            </m.div>
-          )}
+              {page === 'review' && (
+                <PerformanceReview key="review" groups={groups} refreshKey={refreshKey} />
+              )}
 
-          {page.startsWith('groups-') && (
-            <GroupsPage key={page} groups={groups} activeCategory={activeCategory} onCategoryChange={setActiveCategory} onGroupCheckIn={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} onGroupCheckOut={handleCheckOut} canGroupCheckIn={(group: Group) => group.recurring || group.completed < group.required} onGroupAdd={handleGroupAdd} />
-          )}
+              {page === 'calendar' && (
+                <CalendarView key="calendar" refreshKey={refreshKey} />
+              )}
 
-          {page === 'review' && (
-            <PerformanceReview key="review" groups={groups} refreshKey={refreshKey} />
-          )}
+              {page === 'settings' && (
+                <SettingsPage key="settings" onExport={handleExport} onImport={handleImport} onReset={handleReset} onSettingsChange={handleSettingsChange} />
+              )}
+            </AnimatePresence>
 
-          {page === 'calendar' && (
-            <CalendarView key="calendar" refreshKey={refreshKey} />
-          )}
+            {showCheckInModal && selectedGroup && (
+              <DailyCheckIn group={selectedGroup} onSubmit={handleCheckIn} onClose={() => { setShowCheckInModal(false); setSelectedGroup(null); }} />
+            )}
 
-          {page === 'settings' && (
-            <SettingsPage key="settings" onExport={handleExport} onImport={handleImport} onReset={handleReset} onSettingsChange={handleSettingsChange} />
-          )}
-        </AnimatePresence>
+            <ToastContainer toasts={toasts} onUndo={(t) => { t.undoHandler?.(); setToasts(prev => prev.filter(x => x.id !== t.id)); }} />
 
-        {showCheckInModal && selectedGroup && (
-          <DailyCheckIn group={selectedGroup} onSubmit={handleCheckIn} onClose={() => { setShowCheckInModal(false); setSelectedGroup(null); }} />
-        )}
-
-        <ToastContainer toasts={toasts} onUndo={(t) => { t.undoHandler?.(); setToasts(prev => prev.filter(x => x.id !== t.id)); }} />
-
-        {showSearch && (
-          <SearchModal groups={groups} onClose={() => setShowSearch(false)} onGroupSelect={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} />
-        )}
-        {showBulkCheckIn && (
-          <BulkCheckIn groups={groups} onSubmit={handleBulkCheckIn} onClose={() => setShowBulkCheckIn(false)} />
-        )}
-        {showPrintReport && (
-          <PrintableReport groups={groups} refreshKey={refreshKey} onClose={() => setShowPrintReport(false)} />
-        )}
-        {showDataImport && user && (
-          <DataImportModal
-            onClose={() => setShowDataImport(false)}
-            onComplete={() => { setShowDataImport(false); addToast('Data synced to cloud'); }}
-          />
-        )}
+            {showSearch && (
+              <SearchModal groups={groups} onClose={() => setShowSearch(false)} onGroupSelect={(group) => { setSelectedGroup(group); setShowCheckInModal(true); }} />
+            )}
+            {showBulkCheckIn && (
+              <BulkCheckIn groups={groups} onSubmit={handleBulkCheckIn} onClose={() => setShowBulkCheckIn(false)} />
+            )}
+            {showPrintReport && (
+              <PrintableReport groups={groups} refreshKey={refreshKey} onClose={() => setShowPrintReport(false)} />
+            )}
+            {showDataImport && user && (
+              <DataImportModal
+                onClose={() => setShowDataImport(false)}
+                onComplete={() => { setShowDataImport(false); addToast('Data synced to cloud'); }}
+              />
+            )}
+          </div>
+        </m.main>
       </div>
-    </m.main>
+    </div>
   );
 }

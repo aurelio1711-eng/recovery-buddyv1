@@ -12,10 +12,58 @@ interface NavMenuProps {
   currentPage: Page;
   darkMode: boolean;
   onToggleDark: () => void;
+  menuOpen: boolean;
+  setMenuOpen: (open: boolean) => void;
 }
 
-export default function NavMenu({ groups, activeCategory, onCategoryChange, onNavigate, currentPage, darkMode, onToggleDark }: NavMenuProps) {
-  const [open, setOpen] = useState(false);
+const NAV_TABS: { id: Page; label: string; icon: (props: React.SVGProps<SVGSVGElement>) => JSX.Element }[] = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: (props) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+      </svg>
+    ),
+  },
+  {
+    id: 'groups-clinical' as Page,
+    label: 'Groups',
+    icon: (props) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+  },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    icon: (props) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    ),
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: (props) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+        <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
+  },
+];
+
+function isTabActive(tabId: Page, currentPage: Page): boolean {
+  if (tabId === 'dashboard' && currentPage === 'dashboard') return true;
+  if (tabId === 'settings' && currentPage === 'settings') return true;
+  if (tabId === 'calendar' && currentPage === 'calendar') return true;
+  if (tabId === 'groups-clinical' && currentPage.startsWith('groups-')) return true;
+  return false;
+}
+
+export default function NavMenu({ groups, activeCategory, onCategoryChange, onNavigate, currentPage, darkMode, onToggleDark, menuOpen, setMenuOpen }: NavMenuProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const grouped: (Category & { groups: Group[] })[] = CATEGORIES.map(cat => ({
@@ -25,16 +73,17 @@ export default function NavMenu({ groups, activeCategory, onCategoryChange, onNa
 
   const navigateTo = (page: Page) => {
     onNavigate(page);
-    setOpen(false);
+    setMenuOpen(false);
     setExpandedCategory(null);
   };
 
   return (
     <>
-      <div className="fixed left-0 top-0 bottom-0 w-16 bg-surface border-r border-border flex flex-col items-center pt-3 gap-3 z-40 max-sm:hidden">
+      {/* Desktop sidebar trigger (hidden below lg) */}
+      <div className="hidden lg:flex fixed left-0 top-0 bottom-0 w-16 bg-surface border-r border-border flex-col items-center pt-3 gap-3 z-40">
         <m.button type="button"
           className="flex items-center justify-center w-10 h-10 rounded-[var(--radius-md)] text-text-secondary hover:bg-hover-bg transition-colors duration-150 cursor-pointer border-none"
-          onClick={() => setOpen(true)}
+          onClick={() => setMenuOpen(true)}
           whileTap={{ scale: 0.92 }}
           aria-label="Open menu"
         >
@@ -44,7 +93,7 @@ export default function NavMenu({ groups, activeCategory, onCategoryChange, onNa
         </m.button>
         <m.button type="button"
           className="flex flex-col items-center gap-0.5 cursor-pointer border-none"
-          onClick={() => setOpen(true)}
+          onClick={() => setMenuOpen(true)}
           whileTap={{ scale: 0.97 }}
         >
           <img src={logo} alt="Recovery Buddy" className="w-8 h-8" />
@@ -52,15 +101,16 @@ export default function NavMenu({ groups, activeCategory, onCategoryChange, onNa
         </m.button>
       </div>
 
+      {/* Slide-out menu drawer */}
       <AnimatePresence>
-        {open && (
+        {menuOpen && (
           <>
             <m.div
               className="fixed inset-0 bg-black/40 z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
+              onClick={() => setMenuOpen(false)}
             />
 
             <m.aside
@@ -73,7 +123,7 @@ export default function NavMenu({ groups, activeCategory, onCategoryChange, onNa
               <div className="flex items-center gap-3 p-4 border-b border-border">
                 <img src={logo} alt="Recovery Buddy" className="w-9 h-9" />
                 <span className="font-heading font-bold text-base text-text">Recovery Buddy</span>
-                <button type="button" className="ml-auto bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={() => setOpen(false)} aria-label="Close menu">&times;</button>
+                <button type="button" className="ml-auto bg-transparent border-none text-2xl text-text-muted cursor-pointer hover:text-text leading-none p-1" onClick={() => setMenuOpen(false)} aria-label="Close menu">&times;</button>
               </div>
 
               <nav className="flex-1 overflow-y-auto py-3">
@@ -178,6 +228,36 @@ export default function NavMenu({ groups, activeCategory, onCategoryChange, onNa
           </>
         )}
       </AnimatePresence>
+
+      {/* Mobile bottom tab bar (hidden on lg+) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border flex lg:hidden safe-area-inset-bottom" aria-label="Main navigation">
+        {NAV_TABS.map(tab => {
+          const active = isTabActive(tab.id, currentPage);
+          return (
+            <button type="button"
+              key={tab.id}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-xs font-medium bg-transparent border-none cursor-pointer relative transition-colors duration-150 touch-target ${active ? 'text-primary' : 'text-text-muted'}`}
+              onClick={() => {
+                if (tab.id === 'groups-clinical') {
+                  onCategoryChange(activeCategory || 'clinical');
+                }
+                onNavigate(tab.id);
+              }}
+            >
+              <span aria-hidden="true"><tab.icon /></span>
+              <span>{tab.label}</span>
+              {active && (
+                <m.div
+                  className="absolute top-0 left-0 right-0 h-0.5 bg-primary"
+                  layoutId="navIndicator"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </nav>
     </>
   );
 }
+
