@@ -105,28 +105,36 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
     initializeNotifications();
   }, []);
 
+  const processingRef = useRef(false);
+
   const handleCheckIn = (groupId: string, date: string, notes: string, signature: string | null) => {
-    const alreadyCheckedIn = hasCheckIn(groupId, date);
-    const group = groups.find(g => g.id === groupId) ?? null;
-    addCheckIn(groupId, date, notes, signature);
-    if (!alreadyCheckedIn) {
-      setGroups(prev => {
-        const updated = prev.map(g =>
-          g.id === groupId ? { ...g, completed: g.completed + 1 } : g
-        );
-        saveProgram(updated);
-        return updated;
-      });
-      addToast(`Checked in: ${group ? group.name : groupId}`, () => {
-        handleCheckOut(groupId);
-      });
-    } else {
-      addToast('Already checked in for this date');
+    if (processingRef.current) return;
+    processingRef.current = true;
+    try {
+      const alreadyCheckedIn = hasCheckIn(groupId, date);
+      const group = groups.find(g => g.id === groupId) ?? null;
+      addCheckIn(groupId, date, notes, signature);
+      if (!alreadyCheckedIn) {
+        setGroups(prev => {
+          const updated = prev.map(g =>
+            g.id === groupId ? { ...g, completed: g.completed + 1 } : g
+          );
+          saveProgram(updated);
+          return updated;
+        });
+        addToast(`Checked in: ${group ? group.name : groupId}`, () => {
+          handleCheckOut(groupId);
+        });
+      } else {
+        addToast('Already checked in for this date');
+      }
+      setShowCheckInModal(false);
+      setSelectedGroup(null);
+      loadTodayCheckIns();
+      setRefreshKey(k => k + 1);
+    } finally {
+      processingRef.current = false;
     }
-    setShowCheckInModal(false);
-    setSelectedGroup(null);
-    loadTodayCheckIns();
-    setRefreshKey(k => k + 1);
   };
 
   const handleCheckOut = (groupId: string) => {
@@ -408,7 +416,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
                     <ProgressOverview groups={groups} />
 
                     {todayCheckIns.length > 0 ? (
-                      <section>
+                      <section aria-live="polite" aria-atomic="true">
                         <h2 className="font-heading text-base font-semibold text-text mb-3">Today&apos;s Check-Ins</h2>
                         <ul className="flex flex-col gap-2">
                           {todayCheckIns.map(ci => (

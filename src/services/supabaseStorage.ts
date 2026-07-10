@@ -45,7 +45,6 @@ export async function saveProgram(userId: string, groups: Group[]): Promise<bool
     recurring: g.recurring ?? false,
     note: g.note ?? null,
     custom: g.custom ?? false,
-    time: g.time ?? null,
     sort_order: i,
   }));
 

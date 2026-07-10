@@ -145,7 +145,7 @@ export const saveSettings = (settings: Settings): boolean => {
   try {
     const normalized: Settings = {
       startDate: settings.startDate,
-      notifications: settings.notifications || true,
+      notifications: settings.notifications ?? true,
       programStartDate: settings.programStartDate,
       lastPassDate: settings.lastPassDate,
       passHistory: settings.passHistory || [],
@@ -291,22 +291,26 @@ export const validateImportData = (data: unknown): ImportValidation => {
   return { valid: errors.length === 0, errors };
 };
 
-export function mergeProgram(imported: Group[]): void {
-  const existing = loadProgram() || [];
+export function mergeGroups(existing: Group[], imported: Group[]): Group[] {
   const map = new Map<string, Group>();
   for (const g of existing) map.set(g.id, g);
   for (const g of imported) {
     const existing_g = map.get(g.id);
     if (existing_g) {
       existing_g.completed = Math.max(existing_g.completed, g.completed);
-      if (g.note) existing_g.note = g.note;
-      if (g.time) existing_g.time = g.time;
-      if (g.name) existing_g.name = g.name;
+      if (!existing_g.note && g.note) existing_g.note = g.note;
+      if (!existing_g.time && g.time) existing_g.time = g.time;
+      if (!existing_g.name && g.name) existing_g.name = g.name;
     } else {
       map.set(g.id, { ...g });
     }
   }
-  saveProgram(Array.from(map.values()));
+  return Array.from(map.values());
+}
+
+export function mergeProgram(imported: Group[]): void {
+  const existing = loadProgram() || [];
+  saveProgram(mergeGroups(existing, imported));
 }
 
 export function mergeCheckIns(imported: CheckInsRecord): void {

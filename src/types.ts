@@ -7,12 +7,11 @@ export interface Group {
   recurring?: boolean;
   note?: string;
   custom?: boolean;
-  time?: string;
   sort_order?: number;
   user_id?: string;
 }
 
-export type GroupCategory = 'orientation' | 'clinical' | 'after30' | 'support' | 'other';
+export type GroupCategory = 'orientation' | 'clinical' | 'support';
 
 export interface Category {
   id: GroupCategory;

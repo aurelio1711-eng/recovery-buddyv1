@@ -119,6 +119,7 @@ export default function DailyCheckIn({ group, onSubmit, onClose }: DailyCheckInP
               onChange={(e) => setNotes(e.target.value)}
               placeholder="How was your session? Notes..."
               rows={4}
+              maxLength={2000}
               className="text-sm px-3 py-2 rounded-[var(--radius-sm)] border border-border-input bg-background text-text font-body resize-vertical focus-visible:outline-2 focus-visible:outline-primary"
             />
           </div>

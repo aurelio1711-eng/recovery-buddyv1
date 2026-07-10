@@ -149,22 +149,7 @@ export async function pushToCloud(userId: string): Promise<void> {
   const localChecks = local.loadCheckIns();
   const localSettings = local.loadSettings();
 
-  // Merge local into cloud data first
-  const mergedProg = cloudGroups ? [...cloudGroups] : [];
-  if (localProg) {
-    const map = new Map<string, Group>();
-    for (const g of mergedProg) map.set(g.id, g);
-    for (const g of localProg) {
-      const existing = map.get(g.id);
-      if (existing) {
-        existing.completed = Math.max(existing.completed, g.completed);
-      } else {
-        map.set(g.id, g);
-      }
-    }
-    mergedProg.length = 0;
-    mergedProg.push(...map.values());
-  }
+  const mergedProg = local.mergeGroups(cloudGroups ?? [], localProg ?? []);
 
   const mergedCheckIns = cloudCheckIns ? { ...cloudCheckIns } : {};
   if (localChecks) {

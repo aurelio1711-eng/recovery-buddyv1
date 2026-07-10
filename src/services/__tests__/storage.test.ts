@@ -90,9 +90,17 @@ describe('loadSettings / saveSettings', () => {
     storage.saveSettings(settings);
     const loaded = storage.loadSettings();
     expect(loaded.startDate).toBe('2026-01-01');
-    expect(loaded.notifications).toBe(true);
+    expect(loaded.notifications).toBe(false);
     expect(loaded.reminderTime).toBe('10:00');
     expect(loaded.reminderDays).toEqual([1, 2, 3]);
+  });
+
+  it('notifications stays false after save and reload (regression: no || coercion)', () => {
+    const s1 = storage.loadSettings();
+    s1.notifications = false;
+    storage.saveSettings(s1);
+    const s2 = storage.loadSettings();
+    expect(s2.notifications).toBe(false);
   });
 });
 
@@ -159,6 +167,37 @@ describe('export / import', () => {
     storage.mergeProgram([{ id: 'g1', name: 'G1', required: 5, category: 'clinical', completed: 3 }]);
     const loaded = storage.loadProgram();
     expect(loaded?.[0].completed).toBe(3);
+  });
+
+  it('mergeGroups preserves local names when imported has different names', () => {
+    const existing: Group[] = [{ id: 'g1', name: 'My Custom Name', required: 5, category: 'clinical', completed: 2 }];
+    const imported: Group[] = [{ id: 'g1', name: 'Old Imported Name', required: 5, category: 'clinical', completed: 3 }];
+    const merged = storage.mergeGroups(existing, imported);
+    expect(merged[0].name).toBe('My Custom Name');
+    expect(merged[0].completed).toBe(3);
+  });
+
+  it('mergeGroups adds new groups from imported data', () => {
+    const existing: Group[] = [{ id: 'g1', name: 'G1', required: 5, category: 'clinical', completed: 2 }];
+    const imported: Group[] = [{ id: 'g2', name: 'G2', required: 10, category: 'support', completed: 0 }];
+    const merged = storage.mergeGroups(existing, imported);
+    expect(merged).toHaveLength(2);
+    expect(merged.find(g => g.id === 'g2')).toBeDefined();
+  });
+
+  it('mergeGroups takes max completed count', () => {
+    const existing: Group[] = [{ id: 'g1', name: 'G1', required: 5, category: 'clinical', completed: 5 }];
+    const imported: Group[] = [{ id: 'g1', name: 'G1', required: 5, category: 'clinical', completed: 3 }];
+    const merged = storage.mergeGroups(existing, imported);
+    expect(merged[0].completed).toBe(5);
+  });
+
+  it('mergeGroups prefers name from first argument (local-first semantics)', () => {
+    const a: Group[] = [{ id: 'g1', name: 'Local', required: 5, category: 'clinical', completed: 2 }];
+    const b: Group[] = [{ id: 'g1', name: 'Remote', required: 5, category: 'clinical', completed: 4 }];
+    const merged = storage.mergeGroups(a, b);
+    expect(merged[0].name).toBe('Local');
+    expect(merged[0].completed).toBe(4);
   });
 
   it('mergeCheckIns keeps latest timestamp', () => {

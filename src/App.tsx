@@ -92,7 +92,9 @@ function AppContent() {
         </MotionConfig>
       </LazyMotion>
 
-      <div className="dev-banner safe-area-inset-bottom">This site is still in development</div>
+      {import.meta.env.DEV && (
+        <div className="dev-banner safe-area-inset-bottom">This site is still in development</div>
+      )}
     </ErrorBoundary>
   );
 }
