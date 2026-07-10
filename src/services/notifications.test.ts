@@ -13,7 +13,7 @@ Object.defineProperty(MockNotification, 'permission', {
   configurable: true,
 });
 
-MockNotification.requestPermission = vi.fn(async () => {
+MockNotification.requestPermission = vi.fn(async (): Promise<NotificationPermission> => {
   mockPermission = 'granted';
   return 'granted';
 });

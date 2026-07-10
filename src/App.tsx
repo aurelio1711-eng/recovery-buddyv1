@@ -14,6 +14,8 @@ function AppContent() {
   });
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('rb-dark-mode');
+      if (stored !== null) return stored === 'true';
       return document.documentElement.classList.contains('dark');
     }
     return false;
@@ -21,6 +23,7 @@ function AppContent() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('rb-dark-mode', String(darkMode));
   }, [darkMode]);
 
   useEffect(() => {

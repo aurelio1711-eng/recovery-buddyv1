@@ -28,8 +28,8 @@ export function sendNotification(title: string, options?: NotificationOptions): 
       tag: 'recovery-buddy',
       ...options,
     });
-  } catch {
-    // SW-only environments may not support new Notification()
+  } catch (e) {
+    console.warn('Failed to send notification:', e);
   }
 }
 

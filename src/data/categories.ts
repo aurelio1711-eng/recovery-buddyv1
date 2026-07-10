@@ -1,4 +1,4 @@
-import { Category } from '../types';
+import type { Category } from '../types';
 import { OrientationIcon, ClinicalIcon, After30Icon, SupportIcon, PlusIcon } from '../components/Icons';
 
 // Category definitions used for tab navigation and filtering throughout the app

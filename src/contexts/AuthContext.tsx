@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { getSupabase, hasSupabaseCredentials } from '../lib/supabaseClient';
 import { setSyncEnabled } from '../services/storageProvider';
@@ -42,11 +43,13 @@ function setSessionCache(user: User): void {
   try {
     const cache: SessionCache = { userId: user.id, email: user.email, timestamp: Date.now() };
     localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(cache));
-  } catch { /* ignore */ }
+  } catch (e) {
+    console.warn('Failed to cache session:', e);
+  }
 }
 
 function clearSessionCache(): void {
-  try { localStorage.removeItem(SESSION_CACHE_KEY); } catch { /* ignore */ }
+  try { localStorage.removeItem(SESSION_CACHE_KEY); } catch (e) { console.warn('Failed to clear session cache:', e); }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -3,9 +3,10 @@ import { m, AnimatePresence } from 'motion/react';
 import { getAllGroups } from '../data/programData';
 import { loadProgram, saveProgram, addCheckIn, hasCheckIn, removeCheckIn, getCheckInsForDate, exportData, importData, validateImportData } from '../services/storageProvider';
 import { flushSyncQueue, hasPendingSync, getQueueLength } from '../services/syncService';
-import { initNycTime, getNycTimestamp, getLocalTimestamp, getToday } from '../services/nycTime';
+import { getToday } from '../services/nycTime';
 import { initializeNotifications } from '../services/notifications';
 import { useAuth } from '../contexts/AuthContext';
+import useNycClock from '../hooks/useNycClock';
 import type { Group, CheckIn, Toast, Page } from '../types';
 import DailyCheckIn from './DailyCheckIn';
 import ProgressOverview from './ProgressOverview';
@@ -41,9 +42,7 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const [activeCategory, setActiveCategory] = useState('clinical');
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-  const [nycTimeReady, setNycTimeReady] = useState(false);
-  const [localTime, setLocalTime] = useState('');
-  const [nycTime, setNycTime] = useState('');
+  const { ready: nycTimeReady, localTime, nycTime } = useNycClock();
   const [todayCheckIns, setTodayCheckIns] = useState<CheckIn[]>(() => getCheckInsForDate());
   const [refreshKey, setRefreshKey] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -99,32 +98,11 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
   const loadTodayCheckIns = () => setTodayCheckIns(getCheckInsForDate());
 
   useEffect(() => {
-    initNycTime().then(ready => setNycTimeReady(ready));
     const saved = loadProgram();
     if (!saved) {
       saveProgram(getAllGroups());
     }
     initializeNotifications();
-  }, []);
-
-  useEffect(() => {
-    let rafId: number;
-    let lastTick = 0;
-    const tick = (now: number) => {
-      if (now - lastTick >= 1000) {
-        setLocalTime(getLocalTimestamp());
-        setNycTime(getNycTimestamp());
-        lastTick = now;
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-    tick(performance.now());
-    const onVisibility = () => { if (!document.hidden) tick(performance.now()); };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      if (typeof rafId !== 'undefined') cancelAnimationFrame(rafId);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
   }, []);
 
   const handleCheckIn = (groupId: string, date: string, notes: string, signature: string | null) => {
@@ -373,7 +351,13 @@ export default function Dashboard({ darkMode, onToggleDark }: DashboardProps) {
         >
           <div className="max-w-5xl mx-auto px-6 py-8 max-lg:px-4 max-lg:py-4">
             {showOnboarding && (
-              <OnboardingModal onComplete={() => { setShowOnboarding(false); loadTodayCheckIns(); setRefreshKey(k => k + 1); }} />
+              <OnboardingModal onComplete={() => {
+                setShowOnboarding(false);
+                const saved = loadProgram();
+                if (saved) setGroups(saved);
+                loadTodayCheckIns();
+                setRefreshKey(k => k + 1);
+              }} />
             )}
 
             <AnimatePresence mode="wait">

@@ -7,7 +7,7 @@ interface Props {
   cancelLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
-  variant?: string;
+  variant?: 'danger' | 'primary';
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
